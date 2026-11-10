@@ -11,11 +11,13 @@ enum AlarmOccurrence {
       guard let date = calendar.date(byAdding: .day, value: offset, to: today) else { continue }
       let isoDay = (calendar.component(.weekday, from: date) + 5) % 7 + 1
       guard days.isEmpty || days.contains(isoDay) else { continue }
-      let components = DateComponents(hour: hour, minute: minute, second: 0)
-      if let next = calendar.nextDate(after: date.addingTimeInterval(-1),
-                                      matching: components,
-                                      matchingPolicy: .nextTimePreservingSmallerComponents,
-                                      repeatedTimePolicy: .first),
+      // Compose this civil date directly. A time-only nextDate search can
+      // skip an entire day when the DST gap is less than one hour.
+      var components = calendar.dateComponents([.year, .month, .day], from: date)
+      components.hour = hour
+      components.minute = minute
+      components.second = 0
+      if let next = calendar.date(from: components),
          calendar.isDate(next, inSameDayAs: date), next > now {
         return next
       }

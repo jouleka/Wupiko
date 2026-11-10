@@ -39,10 +39,17 @@ class RingService : Service() {
     }
 
     private fun refresh() {
+        // Runtime notification revocation kills the process. A sticky restart can arrive
+        // before the system's permission broadcast, so check again before starting audio.
+        if (!AlarmEngine.exactAllowed(this) || !AlarmEngine.notificationsAllowed(this)) {
+            AlarmEngine.reconcile(this, forceRestore = false)
+        }
         val alarm = AlarmEngine.alarms(this).filter { it.ringing }.sortedBy { it.id }.firstOrNull()
         if (alarm == null) {
             // The user may have stopped it between delivery and service creation.
-            startForeground(NOTICE, notification(this, null))
+            if (AlarmEngine.exactAllowed(this)) {
+                startForeground(NOTICE, notification(this, null))
+            }
             quiet()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()

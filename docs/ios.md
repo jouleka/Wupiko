@@ -22,3 +22,9 @@ Run the Foundation recurrence checks on a Mac from the repository root:
 swiftc modules/wupiko-alarm/ios/AlarmOccurrence.swift tests/ios/main.swift -o /tmp/wupiko-ios-recurrence
 /tmp/wupiko-ios-recurrence
 ```
+
+## Verified on November 10, 2026
+
+An XCTest harness ran the production Swift engine on the iPhone 17 simulator with iOS 26.5 (23F77). It granted AlarmKit authorization, scheduled a one-shot, terminated the process, and observed the daemon reporting the alarm as alerting on relaunch. Calling the native Stop method cleared the ringing state and disabled the entry. The test edited the same entry into a seven-day weekly alarm and repeated the process. After Stop, its registration stayed enabled with the following day's occurrence. Deleting it left an empty catalog. All assertions in this lifecycle run passed.
+
+During a separate attempt to tap the system Stop button, the simulator's SpringBoard crashed inside ToneLibrary while starting audio with an unrecognized `AVAudioSession.reporterID` selector. The daemon still entered its alerting state. System presentation, audible playback, and tapping Stop on the Lock Screen need physical-device verification.

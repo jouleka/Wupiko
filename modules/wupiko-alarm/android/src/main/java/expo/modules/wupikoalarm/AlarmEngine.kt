@@ -53,7 +53,9 @@ internal object AlarmEngine {
 
     private fun schedule(ctx: Context, alarm: Alarm) {
         val time = requireNotNull(alarm.nextAt)
-        val launch = requireNotNull(ctx.packageManager.getLaunchIntentForPackage(ctx.packageName))
+        val launch = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
+            ?: Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setPackage(ctx.packageName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val show = PendingIntent.getActivity(ctx, 0, launch, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val operation = requireNotNull(fireIntent(ctx, alarm, PendingIntent.FLAG_UPDATE_CURRENT))
         ctx.getSystemService(AlarmManager::class.java)

@@ -52,7 +52,8 @@
             "backgroundColor": "#242520"
           }
         }
-      ]
+      ],
+      "./plugins/android"
     ]
   }
 }

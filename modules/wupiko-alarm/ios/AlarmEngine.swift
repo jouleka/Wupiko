@@ -77,6 +77,7 @@ actor AlarmEngine {
     var records = try catalog.load()
     let authorization = permission
     let system = authorization == "granted" ? try manager.alarms : []
+    if authorization == "granted" { try cancelUnowned(system, records: records) }
     let systemIDs = Set(system.map(\.id))
     var changed = false
     for i in records.indices {
@@ -91,7 +92,6 @@ actor AlarmEngine {
       }
     }
     if changed { try catalog.write(records) }
-    if authorization == "granted" { try cancelUnowned(system, records: records) }
     let ringing = Set(system.filter { $0.state == .alerting }.map(\.id))
     let now = Date()
     let rows = try records.map { try $0.serialized(ringing: $0.systemID.map(ringing.contains) ?? false, now: now) }

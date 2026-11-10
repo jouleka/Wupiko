@@ -83,3 +83,16 @@ test('returning to the app reflects a one-time alarm already stopped by the syst
   assert.equal(store.getSnapshot().alarms[0].enabled, false);
   assert.equal(store.getSnapshot().alarms[0].nextAt, null);
 });
+
+test('a failed initial read keeps the loading recovery screen available until retry succeeds', async () => {
+  const { store, engine } = fixture();
+  const healthy = engine.getState;
+  engine.getState = async () => { throw new Error('Catalog unavailable'); };
+  await assert.rejects(store.refresh(), /Catalog unavailable/);
+  assert.equal(store.getSnapshot().ready, false);
+  assert.equal(store.getSnapshot().error, 'Catalog unavailable');
+  engine.getState = healthy;
+  await store.refresh();
+  assert.equal(store.getSnapshot().ready, true);
+  assert.equal(store.getSnapshot().error, null);
+});
