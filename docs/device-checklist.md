@@ -1,6 +1,6 @@
 # Release acceptance on real devices
 
-Use a standalone Release build with Metro disconnected. Record the device, OS build, app commit, zone, volume, focus mode, battery mode, scheduled local time, actual time, and outcome. Test one iPhone running iOS 26+ and one Android phone running Android 8+; include a modern Android 14+ device for full-screen access. Keep a second clock nearby. Restore settings and delete test alarms afterward.
+Use a standalone Release build with Metro disconnected. Record the device, OS build, app commit, zone, volume, focus mode, battery mode, scheduled local time, actual time, and outcome. Test one iPhone running iOS 26+ and one Android phone running Android 8+. Include a modern Android 14+ device for full-screen access. Keep a second clock nearby. Restore settings and delete test alarms afterward.
 
 | Scenario | Procedure and expected observation |
 |---|---|
@@ -10,7 +10,7 @@ Use a standalone Release build with Metro disconnected. Record the device, OS bu
 | Reboot | Schedule before reboot. Test delivery before first unlock where supported, then after unlocking, both with and without reopening the app. |
 | Repeat | Set a repeating alarm for today plus another day. Stop it and confirm the next selected day remains scheduled. |
 | Simultaneous alarms | Set two differently named alarms for the same minute. Stop each separately. Record how the OS presents the second and check both final states. |
-| Edit, disable, delete | Move a scheduled alarm later; check the old minute stays quiet. Disable and delete alarms separately, relaunch, and confirm their previous times stay quiet. |
+| Edit, disable, delete | Move a scheduled alarm later and check the old minute stays quiet. Disable and delete alarms separately, relaunch, and confirm their previous times stay quiet. |
 | Notification and alarm access | Revoke access with an alarm scheduled. Check state on return, enable access again, and verify the resulting next occurrence and actual delivery. On Android 14+ repeat with full-screen access off and check the notification Stop action. |
 | Clock and zone changes | Schedule a future local time. Change time zone, then change clock time across an occurrence. Compare displayed next time with OS delivery. |
 | DST | Test a spring-forward missing time and fall-back repeated time in a zone with DST. Record the OS delivery time and confirm a fall-back alarm does not ring twice. |

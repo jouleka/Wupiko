@@ -19,7 +19,7 @@ export default function Layout() {
       {error ? <><Text style={{ color: p.ink, fontSize: 20, fontWeight: '600' }}>Couldn’t load your alarms</Text><Text style={{ color: p.muted }}>{error}</Text><Button title="Try again" disabled={busy} onPress={() => void run(refresh)} /></> : <ActivityIndicator color={p.accent} />}
     </View> :
       <FeedbackProvider>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: p.paper } }}>
+        <Stack screenOptions={{ headerShown: false, statusBarStyle: p.dark ? 'light' : 'dark', contentStyle: { backgroundColor: p.paper } }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="editor" />
           <Stack.Screen name="settings" />

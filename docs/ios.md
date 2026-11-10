@@ -2,6 +2,8 @@
 
 Wupiko requires iOS 26 or later and an Expo development or standalone build. The Swift module schedules each alarm with AlarmKit after the user grants alarm authorization. The generated app target must have an iOS 26.0 deployment target and a nonempty `NSAlarmKitUsageDescription`. Expo Go does not contain this native module. [Apple’s scheduling sample](https://developer.apple.com/documentation/AlarmKit/scheduling-an-alarm-with-alarmkit)
 
+On earlier iOS versions, UserNotifications can schedule calendar-triggered notifications. Their delivery and presentation follow notification settings. Wupiko sets its deployment target to 26.0 so every supported iPhone has AlarmKit. [Apple’s local notification guide](https://developer.apple.com/documentation/usernotifications/scheduling-a-notification-locally-from-your-app)
+
 ## Delivery and controls
 
 AlarmKit owns the schedule, system alert, audio session, and dismissal when the app is suspended or closed. Wupiko supplies the title, tint, and bundled sound. Its alert configuration omits the secondary button, countdown duration, repeat intent, and timer presentation. iOS 26.0 supports a custom Stop Alarm button. iOS 26.1 and later choose the system stop control. A weekly alarm uses one relative schedule with its selected weekdays. A one-time alarm uses the same local-time schedule with recurrence set to never. [Alarm configuration](https://developer.apple.com/documentation/alarmkit/alarmmanager/alarmconfiguration/alarm(schedule:attributes:stopintent:secondaryintent:sound:)) · [System presentation](https://developer.apple.com/documentation/alarmkit/alarmpresentation/alert)

@@ -6,6 +6,11 @@
 
 An offline alarm clock for iPhone and Android. Choose a time, a sound and optional repeating days. When it rings, press Stop. Wupiko keeps your alarms on your device.
 
+<p align="center">
+  <img src="docs/screenshots/welcome.png" width="245" alt="Meet Wupiko onboarding screen">
+  <img src="docs/screenshots/alarms.png" width="245" alt="Wupiko home screen with a weekday alarm">
+</p>
+
 ## Run locally
 
 Use Node 22.13+ in the 22.x line, npm, and a native development build. Expo Go cannot host Wupiko's Swift and Kotlin modules. For iOS use a Mac with an AlarmKit-capable Xcode SDK, CocoaPods and an iOS 26+ simulator or device. For Android install Android Studio, JDK 17+, Android SDK Platform 37, build-tools 37.0.0 and the NDK version required by React Native. Set `ANDROID_HOME` to the SDK directory.
@@ -26,7 +31,7 @@ npx expo run:ios --configuration Release
 npx expo run:android --variant release
 ```
 
-Local Android release builds use the generated project's signing configuration. Store distribution requires the owner's production signing credentials.
+Local Android release builds use the generated project's signing configuration. The [Android QA build](.github/workflows/android-qa.yml) workflow also produces a downloadable arm64 APK when a GitHub Actions runner is available. Store distribution requires the owner's production signing credentials.
 
 ## How delivery works
 
@@ -46,4 +51,4 @@ swiftc modules/wupiko-alarm/ios/AlarmOccurrence.swift tests/ios/main.swift -o /t
 /tmp/wupiko-ios-recurrence
 ```
 
-The TypeScript suite exercises state transitions, native failures, dismissal and persistence. Native recurrence tests exercise local calendar rules at the scheduling boundary. Use the [device checklist](docs/device-checklist.md) and [validation record](docs/validation.md) to distinguish verified behavior from release checks still outstanding.
+The TypeScript suite exercises state transitions, native failures, dismissal and persistence. Native recurrence tests exercise local calendar rules at the scheduling boundary. On Android, run `./gradlew :wupiko-alarm:testDebugUnitTest` from the generated `android` directory. With an API 33+ emulator attached, `./gradlew :wupiko-alarm:connectedDebugAndroidTest` also exercises the native alarm state transitions. Use the [device checklist](docs/device-checklist.md) and [validation record](docs/validation.md) to distinguish verified behavior from release checks still outstanding.
