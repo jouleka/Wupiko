@@ -2,6 +2,22 @@ import AlarmKit
 import ExpoModulesCore
 import UIKit
 
+private struct AlarmInput: Record {
+  @Field(.required) var id: String = ""
+  @Field(.required) var hour: Int = 0
+  @Field(.required) var minute: Int = 0
+  @Field(.required) var days: [Int] = []
+  @Field(.required) var label: String = ""
+  @Field(.required) var sound: String = ""
+  @Field(.required) var vibrate: Bool = true
+  @Field(.required) var enabled: Bool = true
+
+  func storedAlarm() throws -> StoredAlarm {
+    try StoredAlarm(id: id, hour: hour, minute: minute, days: days, label: label,
+                    sound: sound, vibrate: vibrate, enabled: enabled)
+  }
+}
+
 public final class WupikoAlarmModule: Module {
   private var observations: [Task<Void, Never>] = []
 
@@ -19,8 +35,8 @@ public final class WupikoAlarmModule: Module {
       let url = URL(string: UIApplication.openSettingsURLString)!
       _ = await UIApplication.shared.open(url)
     }
-    AsyncFunction("saveAlarm") { (input: [String: Any]) async throws in
-      try await AlarmEngine.shared.save(StoredAlarm(input: input))
+    AsyncFunction("saveAlarm") { (input: AlarmInput) async throws in
+      try await AlarmEngine.shared.save(input.storedAlarm())
     }
     AsyncFunction("deleteAlarm") { (id: String) async throws in
       guard let uuid = UUID(uuidString: id) else { throw AlarmInputError.invalidInput }

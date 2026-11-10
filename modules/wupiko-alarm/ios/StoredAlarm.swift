@@ -28,15 +28,12 @@ struct StoredAlarm: Codable {
   // cancelling the user's working alarm. Disabled alarms have a nil systemID.
   var systemID: UUID?
 
-  init(input: [String: Any]) throws {
-    guard let rawID = input["id"] as? String, let id = UUID(uuidString: rawID),
-          let hour = input["hour"] as? Int, (0..<24).contains(hour),
-          let minute = input["minute"] as? Int, (0..<60).contains(minute),
-          let days = input["days"] as? [Int], days.allSatisfy((1...7).contains),
-          let label = input["label"] as? String,
-          let sound = input["sound"] as? String, ["daybreak", "ripple", "chime"].contains(sound),
-          let vibrate = input["vibrate"] as? Bool,
-          let enabled = input["enabled"] as? Bool else { throw AlarmInputError.invalidInput }
+  init(id rawID: String, hour: Int, minute: Int, days: [Int], label: String,
+       sound: String, vibrate: Bool, enabled: Bool) throws {
+    guard let id = UUID(uuidString: rawID),
+          (0..<24).contains(hour), (0..<60).contains(minute),
+          days.allSatisfy((1...7).contains),
+          ["daybreak", "ripple", "chime"].contains(sound) else { throw AlarmInputError.invalidInput }
     self.id = id
     self.hour = hour
     self.minute = minute
