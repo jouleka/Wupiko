@@ -24,18 +24,35 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4AC76"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-localization",
-      ["expo-build-properties", { "android": { "minSdkVersion": 26 } }],
-      ["expo-splash-screen", {
-        "image": "./assets/splash.png",
-        "imageWidth": 200,
-        "backgroundColor": "#F9F5EA",
-        "dark": { "backgroundColor": "#242520" }
-      }]
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "backgroundColor": "#F9F5EA",
+          "dark": {
+            "backgroundColor": "#242520"
+          }
+        }
+      ]
     ]
   }
 }
