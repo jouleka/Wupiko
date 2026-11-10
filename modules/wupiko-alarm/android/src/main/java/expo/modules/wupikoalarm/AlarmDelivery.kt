@@ -36,7 +36,7 @@ class RestoreAlarms : BroadcastReceiver() {
             // The unlocked broadcast repeats restoration, so only the earlier locked one
             // clears ringing state. An alarm can already be ringing when the user unlocks.
             AlarmEngine.reconcile(context, clockChanged, intent.action == Intent.ACTION_LOCKED_BOOT_COMPLETED)
-            AlarmEngine.listeners.forEach { it() }
+            AlarmEngine.changed()
         } catch (e: RuntimeException) {
             Log.e("Wupiko", "Could not restore native alarms", e)
         }

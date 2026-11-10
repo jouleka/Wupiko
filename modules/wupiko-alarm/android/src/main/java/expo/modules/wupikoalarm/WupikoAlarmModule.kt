@@ -79,6 +79,11 @@ class WupikoAlarmModule : Module() {
             }
         }
 
+        AsyncFunction("setRingTheme") { theme: String ->
+            require(theme in setOf("system", "light", "dark"))
+            RingActivity.appearance(ctx).edit().putString("theme", theme).apply()
+        }
+
         AsyncFunction("saveAlarm") { a: AlarmInput ->
             AlarmEngine.save(ctx, Alarm(a.id, a.hour, a.minute, a.days.distinct().sorted(),
                 a.label.trim(), a.sound, a.vibrate, a.enabled, null))

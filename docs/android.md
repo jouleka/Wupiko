@@ -21,3 +21,11 @@ Wupiko supports Android 8.0 (API 26) and later. The Expo development build or a 
 ## Native recurrence tests
 
 After Expo prebuild, run `./gradlew :wupiko-alarm:testDebugUnitTest` from the generated Android directory. The tests execute the production Kotlin recurrence code across selected weekdays, exact-minute boundaries, spring gaps, autumn folds, time-zone changes and a 30-minute DST transition. Follow the [device checklist](device-checklist.md) to exercise delivery on hardware.
+
+On an API 33+ emulator, run `./gradlew :wupiko-alarm:connectedDebugAndroidTest` to test native persistence, schedule edits, stale deliveries, enable/disable/delete and one-time versus weekly dismissal. The instrumentation suite registers real AlarmManager entries and calls the delivery boundary directly. A timed lock-screen test exercises actual OS delivery.
+
+## Native validation on November 10, 2026
+
+An API 35 ARM64 emulator ran a temporary APK containing the production scheduling, receiver, service, resources and ringing activity, with a small native entry point driving the alarm engine. Create, edit, disable, enable and delete were exercised. Two simultaneous alarms delivered over the lock screen after the app process was killed. The native UI showed the current time, active alarm label and a single **Stop Alarm** button. Stopping both removed the foreground service, disabled the one-time alarm and retained the next weekly occurrence.
+
+A separate run scheduled alarms and rebooted the PIN-protected emulator. Android reported `RUNNING_LOCKED` and two restored exact AlarmManager entries. Before first unlock the ringing activity appeared, both stops worked, and the weekly entry remained registered. Revoking notification permission during another active alarm stopped the service and cleared the active alarms' enabled and ringing flags. These runs cover native alarm behavior. The [validation record](validation.md) tracks full application build and device results.

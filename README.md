@@ -11,6 +11,10 @@ An offline alarm clock for iPhone and Android. Choose a time, a sound and option
   <img src="docs/screenshots/alarms.png" width="245" alt="Wupiko home screen with a weekday alarm">
 </p>
 
+## QA builds
+
+The [private QA release](https://github.com/jouleka/Wupiko/releases/tag/v1.0.0-qa.1) includes an arm64 Android APK and an iOS Simulator app. Install the APK on an Android 8+ arm64 device, or unzip the simulator build and drag the app onto a running iOS 26+ Simulator.
+
 ## Run locally
 
 Use Node 22.13+ in the 22.x line, npm, and a native development build. Expo Go cannot host Wupiko's Swift and Kotlin modules. For iOS use a Mac with an AlarmKit-capable Xcode SDK, CocoaPods and an iOS 26+ simulator or device. For Android install Android Studio, JDK 17+, Android SDK Platform 37, build-tools 37.0.0 and the NDK version required by React Native. Set `ANDROID_HOME` to the SDK directory.

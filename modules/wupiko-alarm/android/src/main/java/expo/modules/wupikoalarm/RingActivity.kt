@@ -50,7 +50,11 @@ class RingActivity : Activity() {
         }
         if (showing == alarm.id) return
         showing = alarm.id
-        val dark = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        val dark = when (appearance(this).getString("theme", "system")) {
+            "light" -> false
+            "dark" -> true
+            else -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+        }
         val paper = Color.parseColor(if (dark) "#242520" else "#F9F5EA")
         val ink = Color.parseColor(if (dark) "#F9F5EA" else "#242520")
         window.statusBarColor = paper
@@ -117,5 +121,10 @@ class RingActivity : Activity() {
         column.addView(stop, LinearLayout.LayoutParams(-1, -2))
         scroll.addView(column)
         setContentView(scroll)
+    }
+
+    companion object {
+        internal fun appearance(ctx: android.content.Context) = ctx.createDeviceProtectedStorageContext()
+            .getSharedPreferences("wupiko_appearance", android.content.Context.MODE_PRIVATE)
     }
 }

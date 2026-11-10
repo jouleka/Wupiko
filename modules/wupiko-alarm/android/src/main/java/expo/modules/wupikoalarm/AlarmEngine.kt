@@ -177,11 +177,19 @@ internal object AlarmEngine {
                 previousTime <= now -> new.copy(enabled = false, nextAt = null)
                 else -> new
             }
-            if (new != old || forceRestore) replace(ctx, old, new)
+            if (new != old || zoneChanged) replace(ctx, old, new)
+            else if (forceRestore) schedule(ctx, old)
             if (new != old) changedState = true
         }
         if (changedState) changed()
     }
 
-    private fun changed() = listeners.forEach { it() }
+    // A disappearing React context or ringing Activity must never block OS delivery.
+    fun changed() = listeners.forEach { listener ->
+        try {
+            listener()
+        } catch (e: RuntimeException) {
+            Log.w("Wupiko", "Alarm observer unavailable", e)
+        }
+    }
 }
