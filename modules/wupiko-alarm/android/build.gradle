@@ -1,0 +1,16 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.wupikoalarm'
+version = '1.0.0'
+
+android {
+  namespace 'expo.modules.wupikoalarm'
+  defaultConfig { minSdk 26 }
+}
+
+dependencies {
+  testImplementation 'junit:junit:4.13.2'
+}

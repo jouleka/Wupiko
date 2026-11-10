@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Wupiko",
+    "slug": "wupiko",
+    "version": "1.0.0",
+    "scheme": "wupiko",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "app.wupiko.alarm",
+      "buildNumber": "1",
+      "deploymentTarget": "26.0",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAlarmKitUsageDescription": "Wupiko schedules alarms to wake you at the times you choose.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.wupiko.alarm",
+      "versionCode": 1,
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F4AC76"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      ["expo-build-properties", { "android": { "minSdkVersion": 26 } }],
+      ["expo-splash-screen", {
+        "image": "./assets/splash.png",
+        "imageWidth": 200,
+        "backgroundColor": "#F9F5EA",
+        "dark": { "backgroundColor": "#242520" }
+      }]
+    ]
+  }
+}

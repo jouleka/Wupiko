@@ -1,0 +1,5 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["WupikoAlarmModule"] },
+  "android": { "modules": ["expo.modules.wupikoalarm.WupikoAlarmModule"] }
+}
