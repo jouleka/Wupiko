@@ -9,6 +9,7 @@ An offline alarm clock for iPhone and Android. Choose a time, a sound and option
 <p align="center">
   <img src="docs/screenshots/welcome.png" width="245" alt="Meet Wupiko onboarding screen">
   <img src="docs/screenshots/alarms.png" width="245" alt="Wupiko home screen with a weekday alarm">
+  <img src="docs/screenshots/android-ringing.png" width="245" alt="Android ringing screen with the Stop Alarm button">
 </p>
 
 ## QA builds
