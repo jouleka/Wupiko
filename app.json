@@ -53,7 +53,8 @@
           }
         }
       ],
-      "./plugins/android"
+      "./plugins/android",
+      "./plugins/android-release"
     ]
   }
 }
