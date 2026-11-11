@@ -23,7 +23,7 @@
       "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F4AC76"
+        "backgroundColor": "#FFC89A"
       },
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
@@ -47,9 +47,9 @@
         {
           "image": "./assets/splash.png",
           "imageWidth": 200,
-          "backgroundColor": "#F9F5EA",
+          "backgroundColor": "#FFF8EC",
           "dark": {
-            "backgroundColor": "#242520"
+            "backgroundColor": "#1D1830"
           }
         }
       ],

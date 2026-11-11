@@ -1,6 +1,7 @@
 import type { Alarm, AlarmEngine, NativeState, Settings } from './types';
 
-const defaults: Settings = { onboarded: false, theme: 'system', sound: 'daybreak', vibrate: true };
+const defaults: Settings = { onboarded: false, theme: 'system', sound: 'daybreak', vibrate: true, outfit: 'auto' };
+const outfits = ['none', 'sprout', 'flowers', 'shades', 'crown'];
 
 interface Preferences {
   read(): Promise<string | null>;
@@ -26,12 +27,13 @@ function readSettings(raw: string | null): Settings {
     theme: ['light', 'dark'].includes(value?.theme) ? value.theme : defaults.theme,
     sound: ['ripple', 'chime'].includes(value?.sound) ? value.sound : defaults.sound,
     vibrate: typeof value?.vibrate === 'boolean' ? value.vibrate : defaults.vibrate,
+    outfit: outfits.includes(value?.outfit) ? value.outfit : defaults.outfit,
   };
 }
 
 export function createAlarmStore(engine: AlarmEngine, prefs: Preferences) {
   let state: AppState = {
-    ready: false, error: null, alarms: [], ringingIds: [],
+    ready: false, error: null, alarms: [], ringingIds: [], checkInIds: [], followUpIds: [], mornings: [],
     permissions: { alarm: 'undetermined' }, settings: { ...defaults },
   };
   const listeners = new Set<() => void>();
@@ -63,7 +65,7 @@ export function createAlarmStore(engine: AlarmEngine, prefs: Preferences) {
 
   async function sync() {
     const native = await engine.getState();
-    publish({ ...native, ready: true, error: null });
+    publish({ checkInIds: [], followUpIds: [], mornings: [], ...native, ready: true, error: null });
   }
 
   function mutate(action: () => Promise<void>) {
@@ -98,6 +100,7 @@ export function createAlarmStore(engine: AlarmEngine, prefs: Preferences) {
       }
       await enqueue(sync);
     },
+    checkIn: (id: string) => mutate(async () => { await engine.checkIn?.(id); }),
     requestPermission: () => mutate(() => engine.requestPermission()),
     openSettings: () => engine.openSettings(),
     updateSettings: (patch: Partial<Settings>) => enqueue(async () => {

@@ -1,52 +1,59 @@
-"""Render the original Wupiko artwork with librsvg (rsvg-convert)."""
+"""Render the Wupiko artwork with librsvg (rsvg-convert).
+
+The geometry mirrors `WupikoArt` in src/ui/Mascot.tsx. Keep the two in step.
+"""
 from pathlib import Path
+import shutil
 import subprocess
 
-ASSETS = Path(__file__).resolve().parents[1] / "assets"
-INK = "#352D26"
-HONEY = "#FFD45D"
-SHADOW = "#EAA647"
-BISQUE = "#FFF4CB"
-VERMILION = "#B94A32"
+ROOT = Path(__file__).resolve().parents[1]
+ASSETS = ROOT / "assets"
+INK = "#3A2A3E"
+STROKE = f'stroke="{INK}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"'
 
 
-def path(d, fill=INK, stroke=None, width=4):
-    outline = f' stroke="{stroke}" stroke-width="{width}" stroke-linejoin="round" stroke-linecap="round"' if stroke else ""
-    return f'<path d="{d}" fill="{fill}"{outline}/>'
+def eye(x):
+    return (f'<ellipse cx="{x}" cy="108" rx="11" ry="14" fill="{INK}"/>'
+            f'<circle cx="{x + 4}" cy="102" r="4.5" fill="#fff"/><circle cx="{x - 3}" cy="114" r="2" fill="#fff"/>')
 
 
-def oval(cx, cy, rx, ry, fill, transform=""):
-    return f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="{fill}" transform="{transform}"/>'
+def features(mood):
+    line = f'fill="none" {STROKE}'
+    if mood == "sleepy":
+        return f'<path d="M62 108 Q74 117 86 108 M114 108 Q126 117 138 108" {line}/><ellipse cx="100" cy="128" rx="5" ry="4" fill="{INK}"/>'
+    if mood == "happy":
+        return (f'<path d="M62 112 Q74 98 86 112 M114 112 Q126 98 138 112" {line}/>'
+                f'<path d="M84 122 Q100 146 116 122 Z" fill="{INK}" stroke="{INK}" stroke-width="4" stroke-linejoin="round"/>'
+                '<ellipse cx="100" cy="134" rx="7" ry="4" fill="#FF7A8A"/>')
+    if mood == "ringing":
+        eyes = "".join(f'<circle cx="{x}" cy="106" r="16" fill="#fff" {STROKE}/><circle cx="{x}" cy="108" r="6.5" fill="{INK}"/>'
+                       f'<circle cx="{x + 2}" cy="105" r="2" fill="#fff"/>' for x in (72, 128))
+        return eyes + f'<ellipse cx="100" cy="136" rx="10" ry="12" fill="{INK}"/><ellipse cx="100" cy="142" rx="6" ry="4" fill="#FF7A8A"/>'
+    return eye(74) + eye(126) + f'<path d="M90 124 Q95 131 100 125 Q105 131 110 124" {line}/>'
 
 
 def character(mood):
-    sleepy = mood == "sleepy"
-    bright = mood == "ringing"
-    happy = mood == "happy"
-    # The tiny feet lean in opposite directions under a single fluted sunseed.
-    feet = path("M74 152 Q66 158 63 166 Q60 171 67 172 Q78 174 88 167 L93 152 Z")
-    feet += path("M115 152 L115 164 Q116 172 132 171 Q138 170 134 166 L126 152 Z")
-    body = "M51 115 Q52 95 65 78 Q75 63 86 60 Q94 56 88 47 L81 36 Q77 29 82 26 Q90 21 106 35 Q111 21 120 16 Q129 11 131 20 Q131 31 126 41 Q139 34 147 35 Q156 36 151 45 Q146 53 134 61 Q151 65 160 81 Q167 95 169 106 Q174 112 184 110 Q189 110 187 117 Q182 135 163 138 Q154 153 135 161 Q112 171 84 164 Q62 159 52 144 Q38 145 26 132 Q21 126 23 122 Q24 119 30 121 Q39 123 51 115 Z"
-    outline = path(body, HONEY, INK, 4.4)
-    ridge = path("M88 154 Q112 161 139 147 Q155 139 166 124 Q161 145 136 157 Q113 168 88 159 Q83 157 88 154 Z", SHADOW)
-    flick = path("M72 81 Q82 68 92 67", "none", BISQUE, 5)
-    # Two asymmetrical ivory eye windows and dark pupils preserve the face at icon size.
-    if sleepy:
-        eyes = path("M66 104 Q77 116 89 104 M112 102 Q124 113 134 100", "none", INK, 5)
-    elif happy:
-        eyes = path("M65 107 Q75 89 88 101 M111 101 Q121 84 135 96", "none", INK, 5)
+    cheer = mood in ("happy", "ringing")
+    out = ['<defs><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE680"/><stop offset="1" stop-color="#FFC23A"/></linearGradient>'
+           '<linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A3D"/><stop offset="1" stop-color="#FFC23A"/></linearGradient></defs>',
+           f'<ellipse cx="78" cy="186" rx="16" ry="9" fill="{INK}"/><ellipse cx="122" cy="186" rx="16" ry="9" fill="{INK}"/>']
+    arm = f'fill="#FFD24D" stroke="{INK}" stroke-width="5"'
+    if cheer:
+        out.append(f'<ellipse cx="30" cy="92" rx="11" ry="19" transform="rotate(-28 30 92)" {arm}/><ellipse cx="170" cy="92" rx="11" ry="19" transform="rotate(28 170 92)" {arm}/>')
     else:
-        eyes = oval(79, 99, 15, 18, BISQUE, "rotate(7 79 99)") + oval(122, 95, 15, 19, BISQUE, "rotate(7 122 95)")
-        eyes += oval(82 if not bright else 80, 100, 7, 11, INK) + oval(124 if not bright else 122, 96, 7, 12, INK)
-        eyes += oval(84, 97, 1.7, 2.6, "white") + oval(126, 93, 1.7, 2.6, "white")
-    cheeks = oval(64, 118, 7, 3.8, "#EA8D57", "rotate(8 64 118)") + oval(141, 110, 7.6, 4, "#EA8D57", "rotate(-14 141 110)")
-    if sleepy:
-        mouth = oval(100, 118, 3.8, 2.4, INK)
-    elif bright or happy:
-        mouth = path("M89 112 Q101 116 114 108 Q115 124 104 127 Q94 130 89 112 Z") + path("M98 122 Q104 116 112 117 Q108 127 101 125 Z", "#F39A76")
-    else:
-        mouth = path("M91 114 Q101 123 112 111", "none", INK, 4)
-    return feet + outline + ridge + flick + eyes + cheeks + mouth
+        out.append(f'<ellipse cx="27" cy="142" rx="10" ry="17" transform="rotate(50 27 142)" {arm}/><ellipse cx="173" cy="142" rx="10" ry="17" transform="rotate(-50 173 142)" {arm}/>')
+    out.append(f'<path d="M80 60 C68 50 66 36 76 30 C80 40 86 44 92 46 C88 32 94 16 106 8 C108 22 114 34 116 46 C122 38 132 34 142 38 C136 46 130 56 124 62 Z" fill="url(#c)" {STROKE}/>')
+    out.append(f'<path d="M100 46 C146 46 172 86 172 128 C172 164 142 184 100 184 C58 184 28 164 28 128 C28 86 54 46 100 46 Z" fill="url(#b)" stroke="{INK}" stroke-width="5"/>')
+    out.append('<ellipse cx="100" cy="156" rx="42" ry="22" fill="#FFF3C4" opacity=".85"/>')
+    out.append('<ellipse cx="66" cy="74" rx="13" ry="7" transform="rotate(-38 66 74)" fill="#fff" opacity=".75"/><circle cx="54" cy="90" r="3.5" fill="#fff" opacity=".75"/>')
+    blush = ".95" if cheer else ".75"
+    out.append(f'<ellipse cx="58" cy="128" rx="12" ry="7" fill="#FF8FA3" opacity="{blush}"/><ellipse cx="142" cy="128" rx="12" ry="7" fill="#FF8FA3" opacity="{blush}"/>')
+    out.append(features(mood))
+    if mood == "sleepy":
+        out.append(f'<path d="M58 78 C62 44 96 30 124 36 C150 42 170 62 176 92 C170 96 164 92 160 86 C154 68 146 62 140 62 C126 66 100 64 58 78 Z" fill="#8C9BFF" {STROKE}/>'
+                   '<path d="M56 80 C90 62 126 58 146 62" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>'
+                   f'<circle cx="174" cy="98" r="10" fill="#fff" stroke="{INK}" stroke-width="5"/>')
+    return "".join(out)
 
 
 def render(svg, dest, size, save_vector=True):
@@ -55,14 +62,18 @@ def render(svg, dest, size, save_vector=True):
     subprocess.run(["rsvg-convert", "-w", str(size), "-h", str(size), "-o", dest, "-"], input=svg.encode(), check=True)
 
 
-def svg(contents, viewbox="0 0 208 188"):
+def svg(contents, viewbox="0 0 200 200"):
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}">{contents}</svg>'
 
 
 for mood in ["awake", "sleepy", "happy", "ringing"]:
     render(svg(character(mood)), ASSETS / "brand" / f"wupiko-{mood}.png", 480)
+shutil.copy(ASSETS / "brand" / "wupiko-ringing.png", ROOT / "modules/wupiko-alarm/android/src/main/res/drawable-nodpi/wupiko_ringing.png")
 
 figure = character("awake")
-render(svg('<rect width="208" height="208" fill="#F4AC76"/><g transform="translate(-6 -3) scale(1.06)">' + figure + '</g>', "0 0 208 208"), ASSETS / "icon.png", 1024)
-render(svg('<g transform="translate(33 34) scale(.68)">' + figure + '</g>', "0 0 208 208"), ASSETS / "adaptive-icon.png", 1024)
-render(svg(figure, "0 -10 208 208"), ASSETS / "splash.png", 600)
+sky = ('<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB38A"/><stop offset="1" stop-color="#FFE0A3"/></linearGradient></defs>'
+       '<rect width="200" height="200" fill="url(#sky)"/><circle cx="150" cy="58" r="30" fill="#FFF3C9" opacity=".7"/>'
+       '<path d="M-10 168 Q60 138 120 156 T210 150 V210 H-10 Z" fill="#F7A673"/>')
+render(svg(sky + '<g transform="translate(22 26) scale(.78)">' + figure + '</g>'), ASSETS / "icon.png", 1024)
+render(svg('<g transform="translate(46 44) scale(.54)">' + figure + '</g>'), ASSETS / "adaptive-icon.png", 1024)
+render(svg(figure, "-10 -10 220 220"), ASSETS / "splash.png", 600)

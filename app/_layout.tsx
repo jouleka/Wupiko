@@ -4,6 +4,7 @@ import { ActivityIndicator, StatusBar, Text, useColorScheme, View } from 'react-
 import { useWupiko } from '../src/store';
 import { Button, useAction } from '../src/ui/components';
 import { FeedbackProvider } from '../src/ui/Feedback';
+import { CheckIn } from '../src/ui/CheckIn';
 import { Ringing } from '../src/ui/Ringing';
 import { palettes, Theme } from '../src/ui/theme';
 
@@ -25,6 +26,7 @@ export default function Layout() {
           <Stack.Screen name="settings" />
         </Stack>
         <Ringing />
+        <CheckIn />
       </FeedbackProvider>}
   </Theme.Provider>;
 }
