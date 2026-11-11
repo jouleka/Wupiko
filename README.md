@@ -36,7 +36,7 @@ npx expo run:ios --configuration Release
 npx expo run:android --variant release
 ```
 
-Local Android release builds use the generated project's signing configuration. The [Android QA build](.github/workflows/android-qa.yml) workflow also produces a downloadable arm64 APK when a GitHub Actions runner is available. Store distribution requires the owner's production signing credentials.
+Local Android release builds use the generated project's signing configuration. The [Android QA build](.github/workflows/android-qa.yml) workflow also produces a downloadable arm64 APK when a GitHub Actions runner is available. Store builds are signed with the owner's upload key. See the [store release guide](docs/release.md) and the [privacy policy](docs/privacy.md).
 
 ## How delivery works
 
