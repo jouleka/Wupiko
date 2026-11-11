@@ -44,3 +44,33 @@ export function nextDescription(timestamp: number) {
   const d = new Date(timestamp);
   return nextDay(timestamp) + ' at ' + clockText(d.getHours(), d.getMinutes()).full;
 }
+
+/** "in 7h 12m" style countdown to a timestamp. */
+export function countdown(timestamp: number, now = Date.now()) {
+  const minutes = Math.max(0, Math.ceil((timestamp - now) / 60000));
+  if (minutes < 1) return 'any second now';
+  const d = Math.floor(minutes / 1440), h = Math.floor((minutes % 1440) / 60), m = minutes % 60;
+  if (d) return `in ${d}d ${h}h`;
+  if (h) return m ? `in ${h}h ${m}m` : `in ${h}h`;
+  return `in ${m} min`;
+}
+
+export function greeting(hour: number) {
+  if (hour >= 5 && hour < 12) return 'Good morning';
+  if (hour >= 12 && hour < 17) return 'Good afternoon';
+  if (hour >= 17 && hour < 21) return 'Good evening';
+  return 'Sleep tight';
+}
+
+/** Wupiko's opinion on a wake-up time. */
+export function hourQuip(hour: number, minute = 0) {
+  if (hour < 4) return 'Whoa… even the moon is asleep!';
+  if (hour < 6) return 'Before the birds? Brave!';
+  if (hour < 7) return 'Early bird mode: on';
+  if (hour < 9) return minute === 0 ? 'A lovely round hour' : 'A perfectly cosy hour';
+  if (hour < 11) return 'A slow & sunny start';
+  if (hour < 14) return 'Nap’s over, sleepyhead?';
+  if (hour < 17) return 'Afternoon reminder? I got you';
+  if (hour < 21) return 'An evening jingle!';
+  return 'A late-night ping ✦';
+}

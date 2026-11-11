@@ -46,6 +46,10 @@ public final class WupikoAlarmModule: Module {
       guard let uuid = UUID(uuidString: id) else { throw AlarmInputError.invalidInput }
       try await AlarmEngine.shared.stop(uuid)
     }
+    AsyncFunction("checkIn") { (id: String) async throws in
+      guard let uuid = UUID(uuidString: id) else { throw AlarmInputError.invalidInput }
+      try await AlarmEngine.shared.checkIn(uuid)
+    }
 
     OnStartObserving("onAlarmChange") { self.observe() }
     OnStopObserving("onAlarmChange") { self.stopObserving() }

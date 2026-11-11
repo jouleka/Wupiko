@@ -16,6 +16,13 @@ enum AlarmInputError: LocalizedError {
   }
 }
 
+/// A one-off follow-up alarm registered with AlarmKit for one occurrence.
+struct BackupAlarm: Codable, Equatable {
+  let id: UUID
+  let occurrence: Date
+  let at: Date
+}
+
 struct StoredAlarm: Codable {
   let id: UUID
   let hour: Int
@@ -27,6 +34,9 @@ struct StoredAlarm: Codable {
   // App identity survives edits. A fresh daemon ID lets an edit fail without
   // cancelling the user's working alarm. Disabled alarms have a nil systemID.
   var systemID: UUID?
+  // Optional so catalogs written before the wake-up check still decode.
+  var backups: [BackupAlarm]?
+  var ownedIDs: [UUID] { (systemID.map { [$0] } ?? []) + (backups ?? []).map(\.id) }
 
   init(id rawID: String, hour: Int, minute: Int, days: [Int], label: String,
        sound: String, vibrate: Bool, enabled: Bool) throws {
@@ -42,12 +52,14 @@ struct StoredAlarm: Codable {
     self.sound = sound
     self.vibrate = vibrate
     self.systemID = enabled ? UUID() : nil
+    self.backups = []
   }
 
-  func serialized(ringing: Bool, now: Date) throws -> [String: Any] {
+  func serialized(ringing: Bool, now: Date, nagAt: Date?) throws -> [String: Any] {
     var result: [String: Any] = [
       "id": id.uuidString.lowercased(), "hour": hour, "minute": minute, "days": days,
-      "label": label, "sound": sound, "vibrate": vibrate, "enabled": systemID != nil, "nextAt": NSNull()
+      "label": label, "sound": sound, "vibrate": vibrate, "enabled": systemID != nil, "nextAt": NSNull(),
+      "nagAt": nagAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? NSNull()
     ]
     if systemID != nil && !(ringing && days.isEmpty) {
       guard let next = AlarmOccurrence.next(hour: hour, minute: minute, days: days, after: now)
@@ -78,4 +90,44 @@ struct AlarmCatalog {
     let data = try JSONEncoder().encode(alarms)
     try data.write(to: fileURL(), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
   }
+}
+
+struct Morning: Codable {
+  let alarm: UUID
+  let occurrence: Date
+  let outcome: MorningOutcome
+}
+
+/// Append-only record of how each alarm occurrence ended, for the streak.
+struct MorningLog {
+  private static let limit = 500
+
+  private func fileURL() throws -> URL {
+    let directory = try FileManager.default.url(for: .applicationSupportDirectory,
+                                               in: .userDomainMask, appropriateFor: nil, create: true)
+    return directory.appendingPathComponent("wupiko-mornings-v1.json")
+  }
+
+  func load() throws -> [Morning] {
+    do {
+      return try JSONDecoder().decode([Morning].self, from: Data(contentsOf: fileURL()))
+    } catch CocoaError.fileReadNoSuchFile {
+      return []
+    }
+  }
+
+  /// The first outcome recorded for an occurrence wins.
+  func record(_ entries: [Morning]) throws {
+    guard !entries.isEmpty else { return }
+    var log = try load()
+    for entry in entries where !log.contains(where: { $0.alarm == entry.alarm && $0.occurrence == entry.occurrence }) {
+      log.append(entry)
+    }
+    let data = try JSONEncoder().encode(Array(log.suffix(Self.limit)))
+    try data.write(to: fileURL(), options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+  }
+}
+
+extension BackupAlarm {
+  var slot: BackupPlan.Slot { BackupPlan.Slot(occurrence: occurrence, at: at) }
 }

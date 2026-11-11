@@ -56,7 +56,7 @@ test('concurrent preference changes merge with persisted preferences', async () 
   const { store, persisted } = fixture('{"vibrate":false,"obsolete":true,"theme":"old"}');
   await Promise.all([store.updateSettings({ onboarded: true }), store.updateSettings({ sound: 'chime' })]);
   assert.deepEqual(JSON.parse(persisted()!), {
-    vibrate: false, onboarded: true, sound: 'chime', theme: 'system',
+    vibrate: false, onboarded: true, sound: 'chime', theme: 'system', outfit: 'auto',
   });
 });
 
@@ -95,4 +95,23 @@ test('a failed initial read keeps the loading recovery screen available until re
   await store.refresh();
   assert.equal(store.getSnapshot().ready, true);
   assert.equal(store.getSnapshot().error, null);
+});
+
+test('check-in clears the waiting alarm through the native engine', async () => {
+  let waiting = [alarm.id];
+  const { store, rows } = fixture(null, {
+    getState: async () => ({ alarms: [...rows.values()], permissions: { alarm: 'granted' }, ringingIds: [], checkInIds: waiting }),
+    checkIn: async (id) => { waiting = waiting.filter((item) => item !== id); },
+  });
+  await store.saveAlarm(alarm);
+  assert.deepEqual(store.getSnapshot().checkInIds, [alarm.id]);
+  await store.checkIn(alarm.id);
+  assert.deepEqual(store.getSnapshot().checkInIds, []);
+});
+
+test('engines without the wake-up check report nothing to check in', async () => {
+  const { store } = fixture();
+  await store.refresh();
+  assert.deepEqual(store.getSnapshot().checkInIds, []);
+  await store.checkIn(alarm.id);
 });

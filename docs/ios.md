@@ -10,6 +10,24 @@ AlarmKit owns the schedule, system alert, audio session, and dismissal when the 
 
 The three original PCM WAV files are copied into the main app bundle by CocoaPods. AlarmKit chooses the final on-device audio and haptic behavior. Its configuration does not expose per-alarm vibration. Test each chosen sound, silent mode, Focus, locked delivery, and reboot on a real phone and record the exact OS version. [Apple’s AlarmKit session](https://developer.apple.com/videos/play/wwdc2025/230/)
 
+## Wake-up check
+
+Wupiko has no snooze, and the wake-up check is part of every alarm, with no setting to turn it off. iOS lets anyone end an AlarmKit alert from the system UI or the side button, and the app is usually not running at that moment, so Wupiko arms the consequence in advance instead of reacting to dismissal. For each enabled alarm the engine registers one-off `fixed` AlarmKit follow-ups at +1, +3 and +6 minutes for the next three occurrences (one for a one-time alarm). Stopping an alert never cancels them. Only `checkIn`, called from the in-app boop ritual, cancels the follow-ups for occurrences that already rang. The short first gap leaves time to open the app and boop Wupiko, but no time to nap.
+
+Because the system alert is all a half-asleep user sees, its title carries the instruction ("… · Then open Wupiko to check in"), and follow-ups say "You dozed off! Open Wupiko and boop it awake". In the app, Stop reads "Stop & wake Wupiko" and leads straight to the check-in screen, which shows a live countdown to the next ring.
+
+Every `state()` call tops up the horizon, drops follow-ups that fired, and replaces future follow-ups whose time no longer matches the schedule after edits or time-zone changes. Follow-up IDs are part of the record's owned IDs, so unowned-registration cleanup leaves them alone. `state()` reports `checkInIds` (an occurrence has rung and its follow-ups are still registered) and each alarm's `nagAt`.
+
+A determined user can still turn the alarm off in the app or delete it. The check targets the half-asleep reflex, not intent. The Android engine does not implement follow-ups yet, so Android alarms ring once.
+
+## Wake-up rituals and streak
+
+Checking in means finishing a short ritual, picked per alarm per day from four: chase Wupiko as it rolls around, swipe open the curtains, drag the sun over the hills, or pop sleepy bubbles. The choice is stable within a day and changes the next, so a half-asleep thumb can't learn one fixed motion. With VoiceOver on, the chase ritual is used because its targets are plain buttons. Finishing it checks in automatically.
+
+The engine keeps an append-only morning log (`wupiko-mornings-v1.json`, latest 500 entries). A check-in before any follow-up rang is `onTime`, after one is `late`. An occurrence whose follow-ups all fired, or that was edited, switched off or deleted while still waiting, is `missed`. The first outcome for an occurrence wins. `state()` returns the log as `mornings` and `followUpIds` for alarms currently ringing because of a follow-up.
+
+The app turns the log into a streak (`src/streak.ts`): consecutive alarm days without a miss, where a day is only as good as its worst alarm and days without alarms don't count. On-time mornings plant flowers in the home sky's garden, late ones buds, misses a wilted stem. Streaks of 3, 7, 14 and 30 unlock outfits for Wupiko (sprout, flower crown, sunnies, golden crown), which are kept forever and chosen in Settings. After a miss, Wupiko is sad for a day. Android does not record mornings yet, so the streak UI is iOS-only.
+
 ## Catalog and reconciliation
 
 An atomic JSON file in Application Support retains alarm labels, sounds, selected days, and disabled entries. A serialized Swift engine coordinates changes with AlarmKit. Editing schedules the replacement before committing it to disk and retiring the previous system ID. The next reconciliation cancels unowned registrations left by an interruption. A rejected replacement leaves the previously scheduled alarm available. AlarmKit owns delivery throughout this process.
