@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Platform, Text, View, useWindowDimensions } from 'react-native';
+import { Linking, Platform, Text, View, useWindowDimensions } from 'react-native';
 import { rewards, summarize, wornOutfit } from '../src/streak';
 import { WupikoArt } from '../src/ui/Mascot';
 import { useWupiko } from '../src/store';
@@ -9,6 +9,8 @@ import { Icon, Mascot, type IconName } from '../src/ui/Art';
 import { Bar, Button, Card, Choices, CircleButton, Copy, Field, Heading, Screen, Squish, Toggle, haptic, row, useAction } from '../src/ui/components';
 import { candy, display, usePalette } from '../src/ui/theme';
 import { soundNames } from '../src/ui/time';
+
+const privacyUrl = 'https://jouleka.github.io/Wupiko/privacy.html';
 
 const themes: { value: Theme; title: string; icon: IconName; color: string }[] = [
   { value: 'system', title: 'Auto', icon: 'sparkle', color: candy.lilac },
@@ -106,6 +108,7 @@ export default function Preferences() {
           <Copy size={13} style={{ fontWeight: '800', color: p.accent, marginTop: 2 }}>{boops ? `${boops} boop${boops === 1 ? '' : 's'} today ♥` : 'Made with sunshine · v1.0'}</Copy>
         </View>
       </Card>
+      <Button title="Privacy policy" secondary icon="external" onPress={() => void run(() => Linking.openURL(privacyUrl), 'Couldn’t open the privacy policy')} />
     </View>
   </Screen>;
 }
