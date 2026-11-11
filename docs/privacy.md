@@ -36,4 +36,4 @@ If this policy changes, the new version will be published at this address with a
 
 ## Contact
 
-Questions about this policy: open an issue at the address listed on the app's store page.
+Questions about this policy: [open an issue](https://github.com/jouleka/Wupiko/issues) on Wupiko's GitHub repository.
