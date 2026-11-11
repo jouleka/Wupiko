@@ -79,9 +79,9 @@ export default function Preferences() {
   return <Screen header={<Bar><CircleButton label="Back to alarms" icon="back" onPress={back} /></Bar>}>
     <Heading kicker="Make it yours">Settings</Heading>
     <View style={{ gap: 28 }}>
-      {Platform.OS === 'ios' && <Field title="Wupiko’s wardrobe" icon="heart" color={candy.pink} note="Wake up on time to keep your streak and unlock new outfits. Missed mornings reset the streak, but outfits stay yours.">
+      <Field title="Wupiko’s wardrobe" icon="heart" color={candy.pink} note="Wake up on time to keep your streak and unlock new outfits. Missed mornings reset the streak, but outfits stay yours.">
         <Wardrobe best={summary.best} current={summary.current} onTime={summary.onTime} choice={settings.outfit} onPick={(outfit) => change({ outfit })} />
-      </Field>}
+      </Field>
       <Field title="Appearance" icon="palette" color={candy.lilac}><Choices label="Theme" options={themes} value={settings.theme} onChange={(theme) => change({ theme })} /></Field>
       <Field title="Default alarm sound" icon="sound" color={candy.coral}><Choices label="Default alarm sound" options={sounds} value={settings.sound} onChange={(sound) => change({ sound })} /></Field>
       {Platform.OS === 'android' && <Card style={[row, { justifyContent: 'space-between', gap: 10, paddingVertical: 8 }]}><Icon name="vibrate" color={p.accent} weight={2.2} /><Copy size={17} style={{ flex: 1, fontWeight: '700' }}>Vibrate new alarms</Copy><Toggle label="Vibrate new alarms" disabled={busy} value={settings.vibrate} onChange={(vibrate) => change({ vibrate })} /></Card>}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Platform, Text, View, useWindowDimensions } from 'react-native';
+import { Modal, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWupiko } from '../store';
@@ -38,7 +38,7 @@ function ActiveAlarm({ id }: { id: string }) {
   }, []);
   const clock = clockText(now.getHours(), now.getMinutes());
   // iOS arms follow-ups; the check-in screen takes over after Stop.
-  const checkIn = Platform.OS === 'ios' && !!alarm;
+  const checkIn = !!alarm;
   const mascot = Math.min(210, width * .52);
   return <Modal visible animationType="fade" onRequestClose={() => {}}>
     <View style={{ flex: 1, backgroundColor: s.bottom }}>

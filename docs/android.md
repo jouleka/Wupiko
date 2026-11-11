@@ -18,6 +18,12 @@ Wupiko supports Android 8.0 (API 26) and later. The Expo development build or a 
 - A high-importance notification contains **Stop Alarm** and a full-screen intent targeting a native activity that can appear over the lock screen. On Android 14+, Settings exposes full-screen special access. Android decides between lock-screen activity and notification presentation. Denying full-screen access still permits an ordinary alarm notification with Stop Alarm. Alarm labels can be visible on the lock screen, subject to system notification privacy settings. [Urgent notifications](https://developer.android.com/develop/ui/views/notifications/build-notification#urgent-message)
 - Before Play distribution, complete declarations for exact alarms, full-screen intents and the foreground-service type in the app's Play Console. Eligibility and review depend on the alarm-clock use case. [Play Console requirements](https://support.google.com/googleplay/android-developer/answer/13392821)
 
+## Wake-up check, rituals and streak
+
+Android matches iOS: no snooze, and every alarm requires a check-in from the app's wake-up ritual. When an occurrence fires, the engine stores it as `waitingSince` and registers `setAlarmClock` follow-ups at +1, +3 and +6 minutes (`Wake.kt`). Stop never ends the wait; only `checkIn` does, cancelling the remaining follow-ups. A follow-up rings like the alarm with "You dozed off! Round two". The native ring screen reads "Stop & wake Wupiko" and opens the app on Stop, which shows the ritual.
+
+Each occurrence is logged in `wupiko_mornings_v1` (device-protected storage): `onTime` if checked in before a follow-up rang, `late` after, `missed` once the last follow-up is silenced, the follow-ups were lost (for example the phone was off), or the alarm was edited, deleted or rang again while still waiting. Reconciliation re-arms pending follow-ups after a reboot or force-stop. `getState` returns `checkInIds`, `followUpIds`, each alarm's `nagAt` and the `mornings` log, which the shared JS turns into the streak, garden and outfits described in [ios.md](ios.md).
+
 ## Native recurrence tests
 
 After Expo prebuild, run `./gradlew :wupiko-alarm:testDebugUnitTest` from the generated Android directory. The tests execute the production Kotlin recurrence code across selected weekdays, exact-minute boundaries, spring gaps, autumn folds, time-zone changes and a 30-minute DST transition. Follow the [device checklist](device-checklist.md) to exercise delivery on hardware.
