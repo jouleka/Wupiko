@@ -7,7 +7,15 @@ import java.util.UUID
 internal data class Alarm(
     val id: String, val hour: Int, val minute: Int, val days: List<Int>,
     val label: String, val sound: String, val vibrate: Boolean, val enabled: Boolean,
-    val nextAt: Long?, val ringing: Boolean = false
+    val nextAt: Long?, val ringing: Boolean = false,
+    /** The occurrence still waiting for a check-in, if any. */
+    val waitingSince: Long? = null,
+    /** Follow-up ring times not yet delivered for that occurrence. */
+    val followUps: List<Long> = emptyList(),
+    /** A follow-up has rung, so a check-in now is late. */
+    val nagged: Boolean = false,
+    /** The current ring is a follow-up. */
+    val followUp: Boolean = false
 ) {
     init {
         require(UUID.fromString(id).toString().equals(id, ignoreCase = true)) { "Invalid alarm ID" }
@@ -17,12 +25,15 @@ internal data class Alarm(
 
     fun withNext(after: Long) = copy(nextAt = if (enabled) Occurrence.next(hour, minute, days, after) else null)
 
-    fun toMap(): Map<String, Any?> = mapOf(
+    fun toMap(now: Long = System.currentTimeMillis()): Map<String, Any?> = mapOf(
         "id" to id, "hour" to hour, "minute" to minute, "days" to days, "label" to label,
-        "sound" to sound, "vibrate" to vibrate, "enabled" to enabled, "nextAt" to nextAt?.toDouble()
+        "sound" to sound, "vibrate" to vibrate, "enabled" to enabled, "nextAt" to nextAt?.toDouble(),
+        "nagAt" to followUps.filter { it > now }.minOrNull()?.toDouble()
     )
 
-    fun encode(): JSONObject = JSONObject(toMap()).put("ringing", ringing)
+    fun encode(): JSONObject = JSONObject(toMap()).apply { remove("nagAt") }
+        .put("ringing", ringing).put("waitingSince", waitingSince ?: JSONObject.NULL)
+        .put("followUps", JSONArray(followUps)).put("nagged", nagged).put("followUp", followUp)
 
     companion object {
         fun decode(json: JSONObject): Alarm {
@@ -33,7 +44,10 @@ internal data class Alarm(
                 json.getString("label"), json.getString("sound"),
                 json.getBoolean("vibrate"), json.getBoolean("enabled"),
                 if (json.isNull("nextAt")) null else json.getLong("nextAt"),
-                json.optBoolean("ringing")
+                json.optBoolean("ringing"),
+                if (json.isNull("waitingSince") || !json.has("waitingSince")) null else json.getLong("waitingSince"),
+                json.optJSONArray("followUps")?.let { a -> (0 until a.length()).map { a.getLong(it) } } ?: emptyList(),
+                json.optBoolean("nagged"), json.optBoolean("followUp")
             )
         }
     }

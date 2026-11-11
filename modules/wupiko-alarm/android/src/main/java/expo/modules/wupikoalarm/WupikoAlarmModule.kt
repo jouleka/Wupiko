@@ -41,14 +41,18 @@ class WupikoAlarmModule : Module() {
             AlarmEngine.reconcile(ctx, forceRestore = needsRestore)
             needsRestore = false
             val alarms = AlarmEngine.alarms(ctx)
+            val now = System.currentTimeMillis()
             mapOf(
-                "alarms" to alarms.map { it.toMap() },
+                "alarms" to alarms.map { it.toMap(now) },
                 "permissions" to mapOf(
                     "alarm" to if (AlarmEngine.exactAllowed(ctx)) "granted" else "denied",
                     "fullScreen" to AlarmEngine.fullScreenAllowed(ctx),
                     "notifications" to AlarmEngine.notificationsAllowed(ctx)
                 ),
-                "ringingIds" to alarms.filter { it.ringing }.sortedBy { it.id }.map { it.id }
+                "ringingIds" to alarms.filter { it.ringing }.sortedBy { it.id }.map { it.id },
+                "checkInIds" to alarms.filter { it.waitingSince != null }.sortedBy { it.waitingSince }.map { it.id },
+                "followUpIds" to alarms.filter { it.ringing && it.followUp }.map { it.id },
+                "mornings" to MorningLog.load(ctx).map { it.toMap() }
             )
         }
 
@@ -94,6 +98,10 @@ class WupikoAlarmModule : Module() {
         }
         AsyncFunction("stopAlarm") { id: String ->
             AlarmEngine.stop(ctx, id)
+            RingService.clearFallback(ctx, id)
+        }
+        AsyncFunction("checkIn") { id: String ->
+            AlarmEngine.checkIn(ctx, id)
             RingService.clearFallback(ctx, id)
         }
     }

@@ -55,8 +55,8 @@ class RingActivity : Activity() {
             "dark" -> true
             else -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         }
-        val paper = Color.parseColor(if (dark) "#242520" else "#F9F5EA")
-        val ink = Color.parseColor(if (dark) "#F9F5EA" else "#242520")
+        val paper = Color.parseColor(if (dark) "#1D1830" else "#FFE0A3")
+        val ink = Color.parseColor(if (dark) "#FFF4E2" else "#3A2232")
         window.statusBarColor = paper
         window.navigationBarColor = paper
         @Suppress("DEPRECATION")
@@ -92,30 +92,43 @@ class RingActivity : Activity() {
         }
         column.addView(time)
         val title = TextView(this).apply {
-            text = alarm.label.ifBlank { "Time to wake up." }
+            text = if (alarm.followUp) "You dozed off! Round two ☀" else alarm.label.ifBlank { "Rise and shine!" }
             gravity = Gravity.CENTER
             textSize = 22f
             setTextColor(ink)
-            setPadding(0, dp(6), 0, dp(30))
+            setPadding(0, dp(6), 0, dp(12))
         }
         column.addView(title)
+        val hint = TextView(this).apply {
+            text = "Next: boop Wupiko awake, or it rings again."
+            gravity = Gravity.CENTER
+            textSize = 15f
+            setTextColor(ink)
+            alpha = .75f
+            setPadding(0, 0, 0, dp(18))
+        }
+        column.addView(hint)
         val stop = Button(this).apply {
-            text = "Stop Alarm"
+            text = "Stop & wake Wupiko"
             isAllCaps = false
             textSize = 22f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.parseColor("#242520"))
+            setTextColor(Color.WHITE)
             minHeight = dp(64)
             background = android.graphics.drawable.RippleDrawable(
                 android.content.res.ColorStateList.valueOf(0x22745200),
                 GradientDrawable().apply {
-                    setColor(Color.parseColor("#FFD45D"))
+                    setColor(Color.parseColor("#FF6B4A"))
                     cornerRadius = dp(24).toFloat()
                 }, null)
             setOnClickListener {
                 performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
                 AlarmEngine.stop(this@RingActivity, alarm.id)
                 RingService.clearFallback(this@RingActivity, alarm.id)
+                // Go straight to the check-in ritual so the right next move is obvious.
+                packageManager.getLaunchIntentForPackage(packageName)?.let {
+                    runCatching { startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }
             }
         }
         column.addView(stop, LinearLayout.LayoutParams(-1, -2))

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
-import { Alert, Platform, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useWupiko } from '../src/store';
 import type { Alarm } from '../src/types';
@@ -76,7 +76,7 @@ function NextReward({ summary }: { summary: Summary }) {
       <WupikoArt face="happy" size={46} outfit={reward.outfit} />
     </View>
     <View style={{ flex: 1, gap: 5 }}>
-      <Text style={{ color: p.ink, fontWeight: '800', fontSize: 14 }}>{left === 1 ? 'One more on-time morning' : `${left} more on-time mornings`} → {reward.title}</Text>
+      <Text style={{ color: p.ink, fontWeight: '800', fontSize: 14 }}>{left === 1 ? 'One more morning' : `${left} more mornings`} → {reward.title}</Text>
       <View style={{ height: 8, borderRadius: 4, backgroundColor: p.soft, overflow: 'hidden' }}>
         <View style={{ width: `${Math.round((summary.current / reward.days) * 100)}%`, height: '100%', borderRadius: 4, backgroundColor: candy.sun }} />
       </View>
@@ -144,8 +144,6 @@ export default function Home() {
   if (!settings.onboarded) return <Welcome />;
   const next = alarms.filter((alarm) => alarm.enabled && alarm.nextAt != null).sort((a, b) => a.nextAt! - b.nextAt!)[0];
   const sorted = [...alarms].sort((a, b) => a.hour - b.hour || a.minute - b.minute || a.label.localeCompare(b.label));
-  // Only the iOS engine records mornings so far.
-  const streaks = Platform.OS === 'ios';
   const summary = summarize(mornings ?? []);
   const outfit = wornOutfit(settings.outfit, summary.best);
   const warning = permissions.alarm !== 'granted' || permissions.notifications === false || permissions.fullScreen === false;
@@ -153,7 +151,7 @@ export default function Home() {
     footer={<Button testID="create-alarm" title={alarms.length ? 'Add alarm' : 'Set your first alarm'} icon="plus" onPress={() => router.push('/editor')} />}>
     <View style={[row, { justifyContent: 'space-between', marginBottom: 14, marginTop: 2, gap: 10 }]}>
       <Copy heading size={30} style={{ flexShrink: 1 }}>{greeting(new Date().getHours())}{new Date().getHours() >= 21 || new Date().getHours() < 5 ? '.' : '!'}</Copy>
-      {streaks && sorted.length > 0 && <StreakPill summary={summary} />}
+      {sorted.length > 0 && <StreakPill summary={summary} />}
     </View>
     {!!error && <Pressable accessibilityRole="button" onPress={() => void run(refresh)} style={{ paddingVertical: 12 }}><Copy>{error} · Try again</Copy></Pressable>}
     {warning && <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} style={({ pressed }) => [row, { gap: 10, borderWidth: 2, borderColor: '#FFB199', borderRadius: 18, padding: 12, marginBottom: 14, backgroundColor: pressed ? p.soft : p.dark ? '#43283A' : '#FFEDE6' }]}>
@@ -161,7 +159,7 @@ export default function Home() {
     </Pressable>}
     {sorted.length ? <>
       <Hero next={next} count={alarms.length} summary={summary} outfit={outfit} />
-      {streaks && <NextReward summary={summary} />}
+      <NextReward summary={summary} />
       <View style={[row, { justifyContent: 'space-between', marginTop: 24, marginBottom: 12 }]}>
         <Copy heading size={24}>Your alarms</Copy>
         <View style={{ backgroundColor: p.soft, borderRadius: 99, paddingHorizontal: 10, paddingVertical: 3 }}><Text style={{ color: p.muted, fontWeight: '800' }}>{alarms.filter((a) => a.enabled).length} on</Text></View>

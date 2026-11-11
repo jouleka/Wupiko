@@ -21,6 +21,17 @@ class AlarmDelivery : BroadcastReceiver() {
                     }
                 }
             }
+            AlarmEngine.FOLLOW -> {
+                val time = path.getOrNull(1)?.toLongOrNull() ?: return
+                if (AlarmEngine.fireFollowUp(context, id, time)) {
+                    try {
+                        context.startForegroundService(Intent(context, RingService::class.java))
+                    } catch (e: RuntimeException) {
+                        Log.e("Wupiko", "System declined foreground ringing service", e)
+                        RingService.postFallback(context, id)
+                    }
+                }
+            }
             AlarmEngine.STOP -> {
                 AlarmEngine.stop(context, id)
                 RingService.clearFallback(context, id)

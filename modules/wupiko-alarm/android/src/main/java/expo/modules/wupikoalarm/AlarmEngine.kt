@@ -16,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArraySet
 internal object AlarmEngine {
     const val FIRE = "expo.modules.wupikoalarm.FIRE"
     const val STOP = "expo.modules.wupikoalarm.STOP"
+    const val FOLLOW = "expo.modules.wupikoalarm.FOLLOW"
     val listeners = CopyOnWriteArraySet<() -> Unit>()
 
     private fun prefs(ctx: Context) = ctx.createDeviceProtectedStorageContext()
@@ -70,6 +71,38 @@ internal object AlarmEngine {
         }
     }
 
+    private fun followIntent(ctx: Context, id: String, time: Long, flags: Int) = PendingIntent.getBroadcast(
+        ctx, 0, Intent(ctx, AlarmDelivery::class.java).setAction(FOLLOW)
+            .setData(Uri.parse("wupiko-native://follow/$id/$time")),
+        flags or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    private fun scheduleFollowUps(ctx: Context, alarm: Alarm, now: Long = System.currentTimeMillis()) {
+        val launch = ctx.packageManager.getLaunchIntentForPackage(ctx.packageName)
+        val show = launch?.let { PendingIntent.getActivity(ctx, 0, it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT) }
+        for (time in alarm.followUps.filter { it > now }) {
+            val operation = requireNotNull(followIntent(ctx, alarm.id, time, PendingIntent.FLAG_UPDATE_CURRENT))
+            ctx.getSystemService(AlarmManager::class.java).setAlarmClock(AlarmManager.AlarmClockInfo(time, show), operation)
+        }
+    }
+
+    private fun cancelFollowUps(ctx: Context, alarm: Alarm?) {
+        for (time in alarm?.followUps.orEmpty()) {
+            followIntent(ctx, alarm!!.id, time, PendingIntent.FLAG_NO_CREATE)?.let {
+                ctx.getSystemService(AlarmManager::class.java).cancel(it)
+                it.cancel()
+            }
+        }
+    }
+
+    /** Ends a wait without a check-in: editing, deleting or ignoring an alarm is not a way out. */
+    private fun abandon(ctx: Context, alarm: Alarm?): Alarm? {
+        val since = alarm?.waitingSince ?: return alarm
+        cancelFollowUps(ctx, alarm)
+        MorningLog.record(ctx, listOf(Morning(alarm.id, since, "missed")))
+        return alarm.copy(waitingSince = null, followUps = emptyList(), nagged = false, followUp = false)
+    }
+
     private fun replace(ctx: Context, old: Alarm?, new: Alarm) {
         if (new.enabled && new.nextAt != null) schedule(ctx, new)
         try {
@@ -87,7 +120,9 @@ internal object AlarmEngine {
             check(exactAllowed(ctx)) { "Allow Alarms & reminders to set this alarm." }
             check(notificationsAllowed(ctx)) { "Enable alarm notifications so you can see and stop your alarm." }
         }
-        replace(ctx, find(ctx, alarm.id), alarm.withNext(System.currentTimeMillis()))
+        val old = find(ctx, alarm.id)
+        replace(ctx, old, alarm.withNext(System.currentTimeMillis()))
+        abandon(ctx, old)
         changed()
     }
 
@@ -96,6 +131,7 @@ internal object AlarmEngine {
         val alarm = find(ctx, id) ?: return
         check(prefs(ctx).edit().remove(id).commit()) { "Could not delete alarm" }
         cancel(ctx, alarm)
+        abandon(ctx, alarm)
         changed()
     }
 
@@ -103,8 +139,36 @@ internal object AlarmEngine {
     fun stop(ctx: Context, id: String) {
         val alarm = find(ctx, id) ?: return
         if (!alarm.ringing) return
-        write(ctx, alarm.copy(ringing = false))
+        var next = alarm.copy(ringing = false, followUp = false)
+        // Stopping never ends the wait. Once the last follow-up has rung and is silenced, the morning is missed.
+        if (next.waitingSince != null && Wake.exhausted(next.followUps, false, System.currentTimeMillis())) {
+            next = requireNotNull(abandon(ctx, next))
+        }
+        write(ctx, next)
         changed()
+    }
+
+    /** The user finished the app's wake-up ritual: silence everything and log the morning. */
+    @Synchronized
+    fun checkIn(ctx: Context, id: String) {
+        val alarm = find(ctx, id) ?: return
+        val since = alarm.waitingSince ?: return
+        cancelFollowUps(ctx, alarm)
+        MorningLog.record(ctx, listOf(Morning(id, since, Wake.outcome(alarm.nagged))))
+        write(ctx, alarm.copy(ringing = false, followUp = false, waitingSince = null, followUps = emptyList(), nagged = false))
+        changed()
+    }
+
+    /** A follow-up for an occurrence the user silenced without checking in. */
+    @Synchronized
+    fun fireFollowUp(ctx: Context, id: String, time: Long): Boolean {
+        val alarm = find(ctx, id) ?: return false
+        if (alarm.waitingSince == null || time !in alarm.followUps) return false
+        if (!exactAllowed(ctx) || !notificationsAllowed(ctx)) return false
+        write(ctx, alarm.copy(ringing = true, followUp = true, nagged = true, followUps = alarm.followUps - time))
+        followIntent(ctx, id, time, PendingIntent.FLAG_NO_CREATE)?.cancel()
+        changed()
+        return true
     }
 
     @Synchronized
@@ -118,7 +182,15 @@ internal object AlarmEngine {
             return false
         }
         val now = maxOf(System.currentTimeMillis(), time)
-        var next = alarm.copy(enabled = alarm.days.isNotEmpty(), ringing = true).withNext(now)
+        // A previous occurrence still waiting at this point was never checked in.
+        val waiting = requireNotNull(abandon(ctx, alarm))
+        var next = waiting.copy(enabled = alarm.days.isNotEmpty(), ringing = true, followUp = false,
+            waitingSince = time, followUps = Wake.followUps(time), nagged = false).withNext(now)
+        try {
+            scheduleFollowUps(ctx, next, now)
+        } catch (e: RuntimeException) {
+            Log.e("Wupiko", "Cannot schedule follow-ups", e)
+        }
         if (next.enabled) {
             // A later recurrence must never prevent this occurrence from ringing.
             try {
@@ -143,6 +215,16 @@ internal object AlarmEngine {
         val zone = ZoneId.systemDefault()
         val accessible = exactAllowed(ctx) && notificationsAllowed(ctx)
         var changedState = false
+        // Follow-ups: end exhausted waits as missed and re-arm the rest after a reboot or force-stop.
+        for (alarm in alarms(ctx).filter { it.waitingSince != null }) {
+            val live = if (reboot) alarm.copy(ringing = false, followUp = false) else alarm
+            if (Wake.exhausted(live.followUps, live.ringing, now)) {
+                write(ctx, requireNotNull(abandon(ctx, live)))
+                changedState = true
+            } else if (accessible && (forceRestore || reboot)) {
+                scheduleFollowUps(ctx, live, now)
+            }
+        }
         for ((_, encoded) in prefs(ctx).all) {
             val json = JSONObject(encoded as String)
             val old = Alarm.decode(json)

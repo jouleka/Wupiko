@@ -75,4 +75,20 @@ class AlarmEngineTest {
         assertFalse(saved().ringing)
         assertFalse(AlarmEngine.fire(ctx, id, first))
     }
+
+    @Test fun stoppingKeepsWaitingUntilCheckIn() {
+        AlarmEngine.save(ctx, draft.copy(enabled = true))
+        val time = requireNotNull(saved().nextAt)
+        assertTrue(AlarmEngine.fire(ctx, id, time))
+        assertEquals(Wake.followUps(time), saved().followUps)
+        AlarmEngine.stop(ctx, id)
+        assertEquals(time, saved().waitingSince)
+        assertTrue(AlarmEngine.fireFollowUp(ctx, id, time + 60_000))
+        assertTrue(saved().ringing && saved().followUp && saved().nagged)
+        AlarmEngine.stop(ctx, id)
+        AlarmEngine.checkIn(ctx, id)
+        assertNull(saved().waitingSince)
+        assertFalse(AlarmEngine.fireFollowUp(ctx, id, time + 180_000))
+        assertEquals("late", MorningLog.load(ctx).last { it.alarmId == id && it.at == time }.outcome)
+    }
 }

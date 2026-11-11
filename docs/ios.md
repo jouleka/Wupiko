@@ -18,7 +18,7 @@ Because the system alert is all a half-asleep user sees, its title carries the i
 
 Every `state()` call tops up the horizon, drops follow-ups that fired, and replaces future follow-ups whose time no longer matches the schedule after edits or time-zone changes. Follow-up IDs are part of the record's owned IDs, so unowned-registration cleanup leaves them alone. `state()` reports `checkInIds` (an occurrence has rung and its follow-ups are still registered) and each alarm's `nagAt`.
 
-A determined user can still turn the alarm off in the app or delete it. The check targets the half-asleep reflex, not intent. The Android engine does not implement follow-ups yet, so Android alarms ring once.
+A determined user can still turn the alarm off in the app or delete it. The check targets the half-asleep reflex, not intent.
 
 ## Wake-up rituals and streak
 
@@ -26,7 +26,7 @@ Checking in means finishing a short ritual, picked per alarm per day from four: 
 
 The engine keeps an append-only morning log (`wupiko-mornings-v1.json`, latest 500 entries). A check-in before any follow-up rang is `onTime`, after one is `late`. An occurrence whose follow-ups all fired, or that was edited, switched off or deleted while still waiting, is `missed`. The first outcome for an occurrence wins. `state()` returns the log as `mornings` and `followUpIds` for alarms currently ringing because of a follow-up.
 
-The app turns the log into a streak (`src/streak.ts`): consecutive alarm days without a miss, where a day is only as good as its worst alarm and days without alarms don't count. On-time mornings plant flowers in the home sky's garden, late ones buds, misses a wilted stem. Streaks of 3, 7, 14 and 30 unlock outfits for Wupiko (sprout, flower crown, sunnies, golden crown), which are kept forever and chosen in Settings. After a miss, Wupiko is sad for a day. Android does not record mornings yet, so the streak UI is iOS-only.
+The app turns the log into a streak (`src/streak.ts`): consecutive alarm days without a miss, where a day is only as good as its worst alarm and days without alarms don't count. On-time mornings plant flowers in the home sky's garden, late ones buds, misses a wilted stem. Streaks of 3, 7, 14 and 30 unlock outfits for Wupiko (sprout, flower crown, sunnies, golden crown), which are kept forever and chosen in Settings. After a miss, Wupiko is sad for a day.
 
 ## Catalog and reconciliation
 

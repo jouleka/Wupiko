@@ -126,13 +126,13 @@ function EditForm({ existing }: { existing?: Alarm }) {
         </ScrollView>
       </Field>
       <Field title="Sound" icon="sound" color={candy.lilac}><Choices options={sounds} label="Alarm sound" value={sound} onChange={setSound} /></Field>
-      {Platform.OS === 'ios' && <Card tint={p.dark ? '#3C2B3F' : '#FFF1C9'} style={[row, { gap: 12, paddingVertical: 12, borderColor: p.dark ? '#5A4060' : '#F5D88A' }]}>
+      <Card tint={p.dark ? '#3C2B3F' : '#FFF1C9'} style={[row, { gap: 12, paddingVertical: 12, borderColor: p.dark ? '#5A4060' : '#F5D88A' }]}>
         <Mascot mood="sleepy" size={48} />
         <View style={{ flex: 1, gap: 3 }}>
           <Copy size={16} style={{ fontWeight: '800' }}>No snooze. No sneaking back to sleep.</Copy>
           <Copy size={13} muted style={{ fontWeight: '600' }}>After you stop it, open Wupiko and boop it awake. Skip that and it rings again in 1 minute.</Copy>
         </View>
-      </Card>}
+      </Card>
       {Platform.OS === 'android' && <Card style={[row, { gap: 12, paddingVertical: 8 }]}><Icon name="vibrate" color={p.accent} weight={2.2} /><View style={{ flex: 1 }}><Copy size={17} style={{ fontWeight: '700' }}>Vibration</Copy></View><Toggle label="Vibration" value={vibrate} onChange={setVibrate} /></Card>}
     </View>
   </Screen>;
