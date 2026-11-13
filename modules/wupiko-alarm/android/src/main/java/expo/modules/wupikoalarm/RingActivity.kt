@@ -43,9 +43,11 @@ class RingActivity : Activity() {
     }
 
     private fun stopAndOpen(id: String) {
+        val nudge = AlarmEngine.alarms(this).firstOrNull { it.id == id }?.isNudge == true
         AlarmEngine.stop(this, id)
         RingService.clearFallback(this, id)
-        // Go straight to the check-in ritual so the right next move is obvious.
+        // A nudge is done once stopped. A wake-up goes straight to the check-in ritual.
+        if (nudge) return
         packageManager.getLaunchIntentForPackage(packageName)?.let {
             runCatching { startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
         }
@@ -113,7 +115,11 @@ class RingActivity : Activity() {
         }
         column.addView(time)
         val title = TextView(this).apply {
-            text = if (alarm.followUp) "You dozed off! Round two ☀" else alarm.label.ifBlank { "Rise and shine!" }
+            text = when {
+                alarm.followUp -> "You dozed off! Round two ☀"
+                alarm.isNudge -> alarm.label.ifBlank { "Wupiko reminder" }
+                else -> alarm.label.ifBlank { "Rise and shine!" }
+            }
             gravity = Gravity.CENTER
             textSize = 22f
             setTextColor(ink)
@@ -121,7 +127,7 @@ class RingActivity : Activity() {
         }
         column.addView(title)
         val hint = TextView(this).apply {
-            text = "Next: boop Wupiko awake, or it rings again."
+            text = if (alarm.isNudge) "A little nudge from Wupiko." else "Next: boop Wupiko awake, or it rings again."
             gravity = Gravity.CENTER
             textSize = 15f
             setTextColor(ink)
@@ -130,7 +136,7 @@ class RingActivity : Activity() {
         }
         column.addView(hint)
         val stop = Button(this).apply {
-            text = "Stop & wake Wupiko"
+            text = if (alarm.isNudge) "Got it!" else "Stop & wake Wupiko"
             isAllCaps = false
             textSize = 22f
             typeface = Typeface.DEFAULT_BOLD

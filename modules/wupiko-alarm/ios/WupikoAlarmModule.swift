@@ -11,10 +11,11 @@ private struct AlarmInput: Record {
   @Field(.required) var sound: String = ""
   @Field(.required) var vibrate: Bool = true
   @Field(.required) var enabled: Bool = true
+  @Field var kind: String = "wake"
 
   func storedAlarm() throws -> StoredAlarm {
     try StoredAlarm(id: id, hour: hour, minute: minute, days: days, label: label,
-                    sound: sound, vibrate: vibrate, enabled: enabled)
+                    sound: sound, vibrate: vibrate, enabled: enabled, kind: kind)
   }
 }
 

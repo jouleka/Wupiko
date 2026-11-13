@@ -184,8 +184,10 @@ internal object AlarmEngine {
         val now = maxOf(System.currentTimeMillis(), time)
         // A previous occurrence still waiting at this point was never checked in.
         val waiting = requireNotNull(abandon(ctx, alarm))
+        // Only wake-ups wait for a check-in. A nudge is done once it is stopped.
         var next = waiting.copy(enabled = alarm.days.isNotEmpty(), ringing = true, followUp = false,
-            waitingSince = time, followUps = Wake.followUps(time), nagged = false).withNext(now)
+            waitingSince = if (alarm.isNudge) null else time,
+            followUps = if (alarm.isNudge) emptyList() else Wake.followUps(time), nagged = false).withNext(now)
         try {
             scheduleFollowUps(ctx, next, now)
         } catch (e: RuntimeException) {

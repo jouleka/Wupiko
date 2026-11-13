@@ -22,6 +22,7 @@ class AlarmInput : Record {
     @Field var sound: String = "daybreak"
     @Field var vibrate: Boolean = true
     @Field var enabled: Boolean = true
+    @Field var kind: String = "wake"
 }
 
 class WupikoAlarmModule : Module() {
@@ -90,7 +91,7 @@ class WupikoAlarmModule : Module() {
 
         AsyncFunction("saveAlarm") { a: AlarmInput ->
             AlarmEngine.save(ctx, Alarm(a.id, a.hour, a.minute, a.days.distinct().sorted(),
-                a.label.trim(), a.sound, a.vibrate, a.enabled, null))
+                a.label.trim(), a.sound, a.vibrate, a.enabled, null, kind = a.kind))
         }
         AsyncFunction("deleteAlarm") { id: String ->
             AlarmEngine.delete(ctx, id)

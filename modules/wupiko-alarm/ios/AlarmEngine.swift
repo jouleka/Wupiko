@@ -47,16 +47,21 @@ actor AlarmEngine {
     let repeats: Alarm.Schedule.Relative.Recurrence = alarm.days.isEmpty
       ? .never : .weekly(alarm.days.map { weekdays[$0 - 1] })
     let time = Alarm.Schedule.Relative.Time(hour: alarm.hour, minute: alarm.minute)
+    // A nudge is a plain reminder: no check-in to point to, and Stop just stops it.
+    let title: LocalizedStringResource = alarm.isNudge
+      ? "\(text.isEmpty ? "Wupiko reminder" : text)"
+      : "\(text.isEmpty ? "Rise & shine" : text) · Then open Wupiko to check in"
     try await register(id: id, schedule: .relative(.init(time: time, repeats: repeats)),
-                       title: "\(text.isEmpty ? "Rise & shine" : text) · Then open Wupiko to check in", sound: alarm.sound)
+                       title: title, sound: alarm.sound, opensApp: !alarm.isNudge)
   }
 
   private func scheduleBackup(_ alarm: StoredAlarm, id: UUID, at date: Date) async throws {
     try await register(id: id, schedule: .fixed(date), title: "You dozed off! Open Wupiko and boop it awake",
-                       sound: alarm.sound)
+                       sound: alarm.sound, opensApp: true)
   }
 
-  private func register(id: UUID, schedule: Alarm.Schedule, title: LocalizedStringResource, sound: String) async throws {
+  private func register(id: UUID, schedule: Alarm.Schedule, title: LocalizedStringResource, sound: String,
+                        opensApp: Bool) async throws {
     guard Bundle.main.url(forResource: sound, withExtension: "wav") != nil
     else { throw AlarmInputError.missingSound }
     let alert: AlarmPresentation.Alert
@@ -70,7 +75,7 @@ actor AlarmEngine {
                                      tintColor: Color(red: 255 / 255, green: 107 / 255, blue: 74 / 255))
     // Stopping the alarm opens Wupiko so the wake-up check-in is waiting.
     let config = AlarmManager.AlarmConfiguration.alarm(schedule: schedule, attributes: attributes,
-                                                        stopIntent: WupikoAlarmIntents.stopAndOpen?(id),
+                                                        stopIntent: opensApp ? WupikoAlarmIntents.stopAndOpen?(id) : nil,
                                                         sound: .named(sound + ".wav"))
     _ = try await manager.schedule(id: id, configuration: config)
   }
@@ -145,8 +150,9 @@ actor AlarmEngine {
   private func reconcileBackups(_ record: inout StoredAlarm, live: Set<UUID>, now: Date) async throws -> Bool {
     let original = record.backups ?? []
     var backups = original.filter { live.contains($0.id) || $0.at > now }
-    // The wake-up check is part of every alarm. There is deliberately no opt-out.
-    let wanted = record.systemID != nil
+    // The wake-up check is part of every wake-up alarm, with deliberately no opt-out.
+    // Nudges are plain reminders and never get follow-ups.
+    let wanted = record.systemID != nil && !record.isNudge
       ? BackupPlan.upcoming(hour: record.hour, minute: record.minute, days: record.days, after: now) : []
     let matches = { (b: BackupAlarm, slot: BackupPlan.Slot) in b.occurrence == slot.occurrence && b.at == slot.at }
     for backup in backups where backup.occurrence > now

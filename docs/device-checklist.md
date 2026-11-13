@@ -8,6 +8,7 @@ Use a standalone Release build with Metro disconnected. Record the device, OS bu
 | Delivery and Stop | Set a named one-time alarm two minutes ahead. Lock the screen. Record the alert, label, audible tone, available actions and stop latency. Stopping it must open Wupiko (after unlock) on the wake-up check-in, both from the lock screen and from the Android notification’s Stop action. Confirm the alarm is off afterward. |
 | Background and termination | Repeat with the app behind another app and after closing it normally. On Android test swiping the task away separately from Settings → Force stop. Record vendor-specific behavior. |
 | Reboot | Schedule before reboot. Test delivery before first unlock where supported, then after unlocking, both with and without reopening the app. |
+| Wake-up vs. reminder | Create a “Just remind me” alarm (for example “Lunch”) two minutes ahead. Stop it from the lock screen: it must not open Wupiko, ring again, ask for a check-in, or change the streak. Repeat with a “Wake me up” alarm and confirm the check-in, follow-ups and streak still apply. |
 | Repeat | Set a repeating alarm for today plus another day. Stop it and confirm the next selected day remains scheduled. |
 | Simultaneous alarms | Set two differently named alarms for the same minute. Stop each separately. Record how the OS presents the second and check both final states. |
 | Edit, disable, delete | Move a scheduled alarm later and check the old minute stays quiet. Disable and delete alarms separately, relaunch, and confirm their previous times stay quiet. |

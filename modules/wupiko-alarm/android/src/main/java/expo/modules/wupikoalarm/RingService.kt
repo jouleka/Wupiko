@@ -131,8 +131,16 @@ class RingService : Service() {
             channel(ctx)
             val builder = Notification.Builder(ctx, CHANNEL)
                 .setSmallIcon(R.drawable.wupiko_alarm)
-                .setContentTitle(if (alarm?.followUp == true) "You dozed off! Round two" else alarm?.label?.ifBlank { "Rise & shine" } ?: "Wupiko")
-                .setContentText(if (alarm != null) "Then open Wupiko and boop it awake to check in." else "Time to wake up.")
+                .setContentTitle(when {
+                    alarm?.followUp == true -> "You dozed off! Round two"
+                    alarm?.isNudge == true -> alarm.label.ifBlank { "Wupiko reminder" }
+                    else -> alarm?.label?.ifBlank { "Rise & shine" } ?: "Wupiko"
+                })
+                .setContentText(when {
+                    alarm == null -> "Time to wake up."
+                    alarm.isNudge -> "A little nudge from Wupiko."
+                    else -> "Then open Wupiko and boop it awake to check in."
+                })
                 .setCategory(Notification.CATEGORY_ALARM)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setOngoing(true)

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Alert, Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useWupiko } from '../src/store';
+import { kindOf } from '../src/kind';
 import type { Alarm } from '../src/types';
 import { Garden, Icon, Mascot, Plant, Scene, Sky, Wordmark, type IconName, type Outfit } from '../src/ui/Art';
 import { WupikoArt } from '../src/ui/Mascot';
@@ -104,14 +105,16 @@ function AlarmCard({ alarm, index }: { alarm: Alarm; index: number }) {
   const repeat = daySummary(alarm.days);
   const phase = phaseOf(alarm.hour);
   const s = skies[phase];
+  const nudge = kindOf(alarm) === 'nudge';
+  const detail = nudge ? `Reminder · ${alarm.label || repeat}` : alarm.label || repeat;
   return <Animated.View entering={FadeInDown.delay(60 + index * 50).duration(300)} layout={LinearTransition.duration(220)} style={{ marginBottom: 12 }}>
     <Card tint={alarm.enabled ? (p.dark ? s.tintDark : s.tint) : p.panel} style={{ paddingVertical: 14, paddingHorizontal: 16, opacity: alarm.enabled ? 1 : .72 }}>
       <View style={[row, { gap: 12 }]}>
         <Pressable testID={`alarm-row-${alarm.id}`} accessibilityRole="button" accessibilityLabel={`Edit ${alarm.label || 'alarm'}, ${full}, ${repeat}`} onPress={() => router.push({ pathname: '/editor', params: { id: alarm.id } })} style={({ pressed }) => [row, { flex: 1, gap: 12, opacity: pressed ? .6 : 1 }]}>
-          <Sticker icon={alarm.enabled ? phaseIcon[phase] : 'moon'} color={alarm.enabled ? s.sticker : p.track} size={42} />
+          <Sticker icon={!alarm.enabled ? 'moon' : nudge ? 'bell' : phaseIcon[phase]} color={alarm.enabled ? s.sticker : p.track} size={42} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={{ color: p.ink, fontFamily: display, fontSize: 36, letterSpacing: -1.6 }}>{time}<Text style={{ fontSize: 15, letterSpacing: 0 }}>{period ? ' ' + period : ''}</Text></Text>
-            <Copy size={14} muted style={{ fontWeight: '700' }} >{alarm.enabled ? (alarm.label || repeat) : `Off · ${alarm.label || repeat}`}</Copy>
+            <Copy size={14} muted style={{ fontWeight: '700' }} >{alarm.enabled ? detail : `Off · ${detail}`}</Copy>
           </View>
         </Pressable>
         <Toggle testID={`alarm-toggle-${alarm.id}`} label={`${alarm.label || 'Alarm'} at ${full} enabled`} value={alarm.enabled} disabled={busy} onChange={(enabled) => void run(async () => {

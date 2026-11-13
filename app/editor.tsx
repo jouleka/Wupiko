@@ -4,7 +4,8 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { randomUUID } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useWupiko } from '../src/store';
-import type { Alarm, Sound } from '../src/types';
+import { kindOf, suggestKind } from '../src/kind';
+import type { Alarm, AlarmKind, Sound } from '../src/types';
 import { Icon, Mascot, Sky, type IconName } from '../src/ui/Art';
 import { Bar, Button, Card, Choices, CircleButton, Copy, Field, Heading, Screen, Squish, Toggle, haptic, row, shade, useAction } from '../src/ui/components';
 import { useFeedback } from '../src/ui/Feedback';
@@ -21,6 +22,10 @@ const presets: { title: string; days: number[] }[] = [
   { title: 'Once', days: [] }, { title: 'Weekdays', days: [1, 2, 3, 4, 5] }, { title: 'Weekends', days: [6, 7] }, { title: 'Every day', days: [1, 2, 3, 4, 5, 6, 7] },
 ];
 const nameIdeas = ['Rise & shine', 'Gym time', 'Take meds', 'Walk the dog', 'Nap’s over'];
+const kinds: { value: AlarmKind; title: string; icon: IconName; color: string }[] = [
+  { value: 'wake', title: 'Wake me up', icon: 'sun', color: candy.coral },
+  { value: 'nudge', title: 'Just remind me', icon: 'bell', color: candy.sky },
+];
 const dayColors = [candy.coral, '#FF9F45', candy.sun, candy.mint, candy.sky, candy.lilac, candy.pink];
 
 function TimePicker({ date, setDate }: { date: Date; setDate: (date: Date) => void }) {
@@ -56,11 +61,14 @@ function EditForm({ existing }: { existing?: Alarm }) {
   const [label, setLabel] = useState(existing?.label ?? '');
   const [sound, setSound] = useState(existing?.sound ?? settings.sound);
   const [vibrate, setVibrate] = useState(existing?.vibrate ?? settings.vibrate);
+  // A new alarm follows the suggested kind until the user picks one.
+  const [chosenKind, setChosenKind] = useState<AlarmKind | null>(existing ? kindOf(existing) : null);
   const { run, busy } = useAction();
   const notice = useFeedback();
   const back = () => router.canGoBack() ? router.back() : router.replace('/');
   const hour = date.getHours();
   const phase = phaseOf(hour);
+  const kind = chosenKind ?? suggestKind(hour, label);
   async function save() {
     const enabled = existing?.enabled ?? true;
     if (enabled && (permissions.alarm !== 'granted' || permissions.notifications === false)) {
@@ -74,11 +82,11 @@ function EditForm({ existing }: { existing?: Alarm }) {
         return;
       }
     }
-    await saveAlarm({ id, hour, minute: date.getMinutes(), days, label: label.trim(), sound, vibrate, enabled, nextAt: null });
+    await saveAlarm({ id, hour, minute: date.getMinutes(), days, label: label.trim(), sound, vibrate, enabled, kind, nextAt: null });
     const saved = getSnapshot().alarms.find((item) => item.id === id);
     haptic(true);
     back();
-    notice({ title: existing ? 'Alarm updated!' : 'Alarm set!', description: saved?.nextAt ? nextDescription(saved.nextAt) : 'Alarm is off', celebrate: true });
+    notice({ title: existing ? 'Alarm updated!' : kind === 'nudge' ? 'Reminder set!' : 'Alarm set!', description: saved?.nextAt ? nextDescription(saved.nextAt) : 'Alarm is off', celebrate: true });
   }
   function confirmDelete() {
     Alert.alert('Delete this alarm?', label.trim() || clockText(hour, date.getMinutes()).full, [
@@ -101,6 +109,9 @@ function EditForm({ existing }: { existing?: Alarm }) {
         </Sky>
         <TimePicker date={date} setDate={setDate} />
       </View>
+      <Field title="What’s it for?" icon={kind === 'wake' ? 'sun' : 'bell'} color={kind === 'wake' ? candy.coral : candy.sky}>
+        <Choices options={kinds} label="Alarm type" value={kind} onChange={setChosenKind} />
+      </Field>
       <Field title="Repeat" icon="repeat" color={candy.mint}>
         <View style={[row, { gap: 6, justifyContent: 'space-between' }]}>
           {dayNames.map((name, i) => {
@@ -127,11 +138,14 @@ function EditForm({ existing }: { existing?: Alarm }) {
       </Field>
       <Field title="Sound" icon="sound" color={candy.lilac}><Choices options={sounds} label="Alarm sound" value={sound} onChange={setSound} /></Field>
       <Card tint={p.dark ? '#3C2B3F' : '#FFF1C9'} style={[row, { gap: 12, paddingVertical: 12, borderColor: p.dark ? '#5A4060' : '#F5D88A' }]}>
-        <Mascot mood="sleepy" size={48} />
-        <View style={{ flex: 1, gap: 3 }}>
+        <Mascot mood={kind === 'wake' ? 'sleepy' : 'happy'} size={48} />
+        {kind === 'wake' ? <View style={{ flex: 1, gap: 3 }}>
           <Copy size={16} style={{ fontWeight: '800' }}>No snooze. No sneaking back to sleep.</Copy>
           <Copy size={13} muted style={{ fontWeight: '600' }}>After you stop it, open Wupiko and boop it awake. Skip that and it rings again in 1 minute.</Copy>
-        </View>
+        </View> : <View style={{ flex: 1, gap: 3 }}>
+          <Copy size={16} style={{ fontWeight: '800' }}>A friendly nudge, nothing more.</Copy>
+          <Copy size={13} muted style={{ fontWeight: '600' }}>Stop it and you’re done. No check-in, no repeats, and it never touches your streak.</Copy>
+        </View>}
       </Card>
       {Platform.OS === 'android' && <Card style={[row, { gap: 12, paddingVertical: 8 }]}><Icon name="vibrate" color={p.accent} weight={2.2} /><View style={{ flex: 1 }}><Copy size={17} style={{ fontWeight: '700' }}>Vibration</Copy></View><Toggle label="Vibration" value={vibrate} onChange={setVibrate} /></Card>}
     </View>

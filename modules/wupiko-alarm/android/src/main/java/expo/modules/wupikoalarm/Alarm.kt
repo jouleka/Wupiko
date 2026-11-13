@@ -15,19 +15,24 @@ internal data class Alarm(
     /** A follow-up has rung, so a check-in now is late. */
     val nagged: Boolean = false,
     /** The current ring is a follow-up. */
-    val followUp: Boolean = false
+    val followUp: Boolean = false,
+    /** "wake" runs the check-in; "nudge" is a plain reminder that Stop ends. */
+    val kind: String = "wake"
 ) {
+    val isNudge get() = kind == "nudge"
+
     init {
         require(UUID.fromString(id).toString().equals(id, ignoreCase = true)) { "Invalid alarm ID" }
         require(hour in 0..23 && minute in 0..59 && days.all { it in 1..7 }) { "Invalid alarm time or weekday" }
         require(sound in setOf("daybreak", "ripple", "chime")) { "Unknown alarm sound" }
+        require(kind in setOf("wake", "nudge")) { "Unknown alarm kind" }
     }
 
     fun withNext(after: Long) = copy(nextAt = if (enabled) Occurrence.next(hour, minute, days, after) else null)
 
     fun toMap(now: Long = System.currentTimeMillis()): Map<String, Any?> = mapOf(
         "id" to id, "hour" to hour, "minute" to minute, "days" to days, "label" to label,
-        "sound" to sound, "vibrate" to vibrate, "enabled" to enabled, "nextAt" to nextAt?.toDouble(),
+        "sound" to sound, "vibrate" to vibrate, "enabled" to enabled, "kind" to kind, "nextAt" to nextAt?.toDouble(),
         "nagAt" to followUps.filter { it > now }.minOrNull()?.toDouble()
     )
 
@@ -47,7 +52,9 @@ internal data class Alarm(
                 json.optBoolean("ringing"),
                 if (json.isNull("waitingSince") || !json.has("waitingSince")) null else json.getLong("waitingSince"),
                 json.optJSONArray("followUps")?.let { a -> (0 until a.length()).map { a.getLong(it) } } ?: emptyList(),
-                json.optBoolean("nagged"), json.optBoolean("followUp")
+                json.optBoolean("nagged"), json.optBoolean("followUp"),
+                // Alarms stored before kinds existed are wake-ups.
+                json.optString("kind", "wake")
             )
         }
     }

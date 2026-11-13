@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { kindOf } from '../kind';
 import { useWupiko } from '../store';
 import { Sky, Wordmark } from './Art';
 import { Mascot } from './Mascot';
@@ -37,8 +38,9 @@ function ActiveAlarm({ id }: { id: string }) {
     return () => clearInterval(timer);
   }, []);
   const clock = clockText(now.getHours(), now.getMinutes());
-  // iOS arms follow-ups; the check-in screen takes over after Stop.
-  const checkIn = !!alarm;
+  // Wake-ups arm follow-ups and the check-in screen takes over after Stop. A nudge is done once stopped.
+  const nudge = !!alarm && kindOf(alarm) === 'nudge';
+  const checkIn = !!alarm && !nudge;
   const mascot = Math.min(210, width * .52);
   return <Modal visible animationType="fade" onRequestClose={() => {}}>
     <View style={{ flex: 1, backgroundColor: s.bottom }}>
@@ -48,19 +50,20 @@ function ActiveAlarm({ id }: { id: string }) {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 24 }}>
           <Text accessibilityRole="header" style={{ fontFamily: display, color: s.text, fontSize: 84, letterSpacing: -4 }}>{clock.time}<Text style={{ fontSize: 28, letterSpacing: -.5 }}>{clock.period ? ' ' + clock.period : ''}</Text></Text>
           <View style={{ backgroundColor: 'rgba(255,255,255,.6)', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 99 }}>
-            <Text style={{ color: s.text, fontFamily: display, fontSize: 20, letterSpacing: -.3 }}>{again ? 'You dozed off! Round two ☀︎' : alarm?.label || 'Rise and shine!'}</Text>
+            <Text style={{ color: s.text, fontFamily: display, fontSize: 20, letterSpacing: -.3 }}>{again ? 'You dozed off! Round two ☀︎' : alarm?.label || (nudge ? 'Wupiko reminder' : 'Rise and shine!')}</Text>
           </View>
           <View style={{ alignItems: 'center', justifyContent: 'center', width: mascot * 1.6, height: mascot * 1.6, marginTop: 8 }}>
             <Ring delay={0} size={mascot * 1.4} /><Ring delay={600} size={mascot * 1.4} /><Ring delay={1200} size={mascot * 1.4} />
-            <Mascot mood="ringing" size={mascot} animate />
+            <Mascot mood={nudge ? 'happy' : 'ringing'} size={mascot} animate />
           </View>
         </View>
         <View style={{ paddingHorizontal: 20, paddingBottom: 12, gap: 10 }}>
-          <Text style={{ textAlign: 'center', color: s.sub, fontWeight: '700', fontSize: 15 }}>{checkIn ? 'Next: boop Wupiko awake, or it rings again.' : 'Wupiko won’t stop until you do!'}</Text>
-          <Button testID="stop-alarm" title={checkIn ? 'Stop & wake Wupiko' : 'Stop Alarm'} icon="sun" tone={{ face: candy.coral, edge: '#C9452A', text: '#FFFFFF' }} disabled={busy} onPress={() => void run(async () => {
+          <Text style={{ textAlign: 'center', color: s.sub, fontWeight: '700', fontSize: 15 }}>{checkIn ? 'Next: boop Wupiko awake, or it rings again.' : nudge ? 'A little nudge from Wupiko.' : 'Wupiko won’t stop until you do!'}</Text>
+          <Button testID="stop-alarm" title={checkIn ? 'Stop & wake Wupiko' : nudge ? 'Got it!' : 'Stop Alarm'} icon={nudge ? 'check' : 'sun'} tone={{ face: candy.coral, edge: '#C9452A', text: '#FFFFFF' }} disabled={busy} onPress={() => void run(async () => {
             await stopAlarm(id);
             haptic(true);
-            if (!checkIn) show({ title: 'Good morning, sunshine!', description: 'Alarm stopped. Go get ’em.', celebrate: true });
+            if (nudge) show({ title: 'Nice one!', description: 'Wupiko is proud of you.', celebrate: true });
+            else if (!checkIn) show({ title: 'Good morning, sunshine!', description: 'Alarm stopped. Go get ’em.', celebrate: true });
           }, 'Couldn’t stop this alarm')} />
         </View>
       </SafeAreaView>

@@ -1,6 +1,8 @@
 export type Sound = 'daybreak' | 'ripple' | 'chime';
 export type Theme = 'system' | 'light' | 'dark';
 export type Outcome = 'onTime' | 'late' | 'missed';
+/** A wake-up runs the full Wupiko check-in; a nudge is a plain reminder that Stop ends. */
+export type AlarmKind = 'wake' | 'nudge';
 export type OutfitChoice = 'auto' | 'none' | 'sprout' | 'flowers' | 'shades' | 'crown';
 
 /** How one alarm occurrence ended: checked in before a follow-up, after one, or never. */
@@ -21,6 +23,8 @@ export interface Alarm {
   sound: Sound;
   vibrate: boolean;
   enabled: boolean;
+  /** Missing on alarms saved before kinds existed, which are wake-ups. */
+  kind?: AlarmKind;
   /** Native scheduler's next occurrence in milliseconds since the Unix epoch. */
   nextAt: number | null;
   /** When the next follow-up rings if the user has not checked in yet. */

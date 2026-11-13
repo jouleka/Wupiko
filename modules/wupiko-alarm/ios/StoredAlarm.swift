@@ -31,6 +31,10 @@ struct StoredAlarm: Codable {
   let label: String
   let sound: String
   let vibrate: Bool
+  // Optional so catalogs written before kinds existed decode as wake-ups.
+  let kind: String?
+  /// A nudge is a plain reminder: Stop ends it, with no follow-ups or check-in.
+  var isNudge: Bool { kind == "nudge" }
   // App identity survives edits. A fresh daemon ID lets an edit fail without
   // cancelling the user's working alarm. Disabled alarms have a nil systemID.
   var systemID: UUID?
@@ -39,11 +43,12 @@ struct StoredAlarm: Codable {
   var ownedIDs: [UUID] { (systemID.map { [$0] } ?? []) + (backups ?? []).map(\.id) }
 
   init(id rawID: String, hour: Int, minute: Int, days: [Int], label: String,
-       sound: String, vibrate: Bool, enabled: Bool) throws {
+       sound: String, vibrate: Bool, enabled: Bool, kind: String) throws {
     guard let id = UUID(uuidString: rawID),
           (0..<24).contains(hour), (0..<60).contains(minute),
           days.allSatisfy((1...7).contains),
-          ["daybreak", "ripple", "chime"].contains(sound) else { throw AlarmInputError.invalidInput }
+          ["daybreak", "ripple", "chime"].contains(sound),
+          ["wake", "nudge"].contains(kind) else { throw AlarmInputError.invalidInput }
     self.id = id
     self.hour = hour
     self.minute = minute
@@ -51,6 +56,7 @@ struct StoredAlarm: Codable {
     self.label = label
     self.sound = sound
     self.vibrate = vibrate
+    self.kind = kind
     self.systemID = enabled ? UUID() : nil
     self.backups = []
   }
@@ -58,7 +64,7 @@ struct StoredAlarm: Codable {
   func serialized(ringing: Bool, now: Date, nagAt: Date?) throws -> [String: Any] {
     var result: [String: Any] = [
       "id": id.uuidString.lowercased(), "hour": hour, "minute": minute, "days": days,
-      "label": label, "sound": sound, "vibrate": vibrate, "enabled": systemID != nil, "nextAt": NSNull(),
+      "label": label, "sound": sound, "vibrate": vibrate, "kind": kind ?? "wake", "enabled": systemID != nil, "nextAt": NSNull(),
       "nagAt": nagAt.map { Int64($0.timeIntervalSince1970 * 1000) } ?? NSNull()
     ]
     if systemID != nil && !(ringing && days.isEmpty) {
