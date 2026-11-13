@@ -24,18 +24,22 @@ export function FeedingStage({ id, width, height, outfit, done, onProgress }: {
   id: string; width: number; height: number; outfit: Outfit; done: boolean; onProgress: (warmth: number) => void;
 }) {
   const reduce = useReducedMotion();
+  // Android's light sensor only reports changes, so steady light means no new
+  // readings. Keep the latest raw value and smooth toward it on every tick.
+  const raw = useRef<number | null>(null);
   const lux = useRef<number | null>(null);
   const warmth = useRef(kept.get(id) ?? 0);
   const [level, setLevel] = useState<LightLevel>('dark');
   const [shown, setShown] = useState(() => kept.get(id) ?? 0);
   const [reading, setReading] = useState<number | null>(null);
-  useLightReadings(!done, (value) => { lux.current = smooth(lux.current, value); });
+  useLightReadings(!done, (value) => { raw.current = value; });
 
   useEffect(() => {
     if (done) return;
     let last = Date.now();
     const timer = setInterval(() => {
       const now = Date.now();
+      if (raw.current != null) lux.current = smooth(lux.current, raw.current);
       const value = lux.current ?? 0;
       warmth.current = warm(warmth.current, value, (now - last) / 1000);
       if (warmth.current >= 1) kept.delete(id);

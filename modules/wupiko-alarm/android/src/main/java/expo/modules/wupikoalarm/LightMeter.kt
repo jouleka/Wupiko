@@ -5,11 +5,9 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.os.SystemClock
 
 /** Reads the phone's ambient light sensor in lux for feeding Wupiko light. */
 internal class LightMeter(private val ctx: Context, private val onLux: (Double) -> Unit) : SensorEventListener {
-    private var lastSent = 0L
     private val manager get() = ctx.getSystemService(SensorManager::class.java)
     private val sensor get() = manager?.getDefaultSensor(Sensor.TYPE_LIGHT)
 
@@ -25,10 +23,8 @@ internal class LightMeter(private val ctx: Context, private val onLux: (Double) 
         manager?.unregisterListener(this)
     }
 
+    // The light sensor reports only on change, so every reading matters: never drop one.
     override fun onSensorChanged(event: SensorEvent) {
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastSent < 250) return
-        lastSent = now
         onLux(event.values[0].toDouble())
     }
 
