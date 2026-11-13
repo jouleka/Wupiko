@@ -39,6 +39,8 @@ Play Console declarations this build needs:
 
 Open `ios/Wupiko.xcworkspace`, select the Wupiko target, choose your team under Signing & Capabilities, then Product → Archive with *Any iOS Device* selected and upload from the Organizer. `ITSAppUsesNonExemptEncryption` is already `false`.
 
+Release builds run a `[Wupiko] Strip framework symbols` phase (from `plugins/ios-release.js`). It strips debug and local symbols from the prebuilt React Native, Hermes and Expo frameworks, just as Xcode already strips the app binary. This cuts the installed app from about 37 MB to 25 MB, and exported symbols and runtime behavior stay the same. If the phase is missing after `npx expo prebuild --clean`, run `pod install` again.
+
 App Store Connect needs the privacy policy URL, a "Data Not Collected" privacy label, and screenshots. `supportsTablet` is `true`, so iPad screenshots are required too. In the review notes, explain that alarms deliberately ring again at +1, +3 and +6 minutes until the in-app wake-up ritual is finished, and that this is the app's core feature.
 
 ## Before submitting
