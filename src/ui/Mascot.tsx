@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
-  cancelAnimation, Easing, FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue,
+  cancelAnimation, Easing, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue,
   withDelay, withRepeat, withSequence, withSpring, withTiming, ZoomIn,
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Stop } from 'react-native-svg';
@@ -73,7 +73,7 @@ function Bloom({ x, y, color }: { x: number; y: number; color: string }) {
   </G>;
 }
 
-/** Unlockable streak rewards, drawn in the same 200-unit space as the body. */
+/** Outfits from island milestones, drawn in the same 200-unit space as the body. */
 function Wear({ outfit }: { outfit: Outfit }) {
   switch (outfit) {
     case 'sprout': return <G>
@@ -267,16 +267,6 @@ export function Mascot({ mood, size = 140, animate = false, interactive = false,
   </View>;
   if (!interactive) return figure;
   return <Pressable accessibilityRole="button" accessibilityLabel="Wupiko" accessibilityHint="Give Wupiko a little boop" onPress={poke} hitSlop={8}>{figure}</Pressable>;
-}
-
-export function Sparkles({ size = 120, color = candy.sun }: { size?: number; color?: string }) {
-  const reduce = useReducedMotion();
-  return <View pointerEvents="none" style={{ position: 'absolute', width: size, height: size }}>
-    {[[.08, .2, .16], [.82, .1, .12], [.9, .62, .1], [.02, .7, .09]].map(([x, y, s], i) =>
-      <Animated.View key={i} entering={reduce ? undefined : FadeIn.delay(i * 120)} style={{ position: 'absolute', left: x * size, top: y * size }}>
-        <Twinkle size={s * size} color={color} delay={i * 400} />
-      </Animated.View>)}
-  </View>;
 }
 
 export function Twinkle({ size, color, delay = 0 }: { size: number; color: string; delay?: number }) {

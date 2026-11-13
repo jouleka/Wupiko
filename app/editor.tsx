@@ -144,7 +144,7 @@ function EditForm({ existing }: { existing?: Alarm }) {
           <Copy size={13} muted style={{ fontWeight: '600' }}>After you stop it, open Wupiko and boop it awake. Skip that and it rings again in 1 minute.</Copy>
         </View> : <View style={{ flex: 1, gap: 3 }}>
           <Copy size={16} style={{ fontWeight: '800' }}>A friendly nudge, nothing more.</Copy>
-          <Copy size={13} muted style={{ fontWeight: '600' }}>Stop it and you’re done. No check-in, no repeats, and it never touches your streak.</Copy>
+          <Copy size={13} muted style={{ fontWeight: '600' }}>Stop it and you’re done. No check-in, no repeats, and it never affects your island.</Copy>
         </View>}
       </Card>
       {Platform.OS === 'android' && <Card style={[row, { gap: 12, paddingVertical: 8 }]}><Icon name="vibrate" color={p.accent} weight={2.2} /><View style={{ flex: 1 }}><Copy size={17} style={{ fontWeight: '700' }}>Vibration</Copy></View><Toggle label="Vibration" value={vibrate} onChange={setVibrate} /></Card>}

@@ -1,17 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
-import { Image, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { Mascot, Twinkle, type Mood } from './Mascot';
-import { phaseOf, skies, usePalette, type Phase } from './theme';
+import { phaseOf, skies, type Phase } from './theme';
 
 export { Mascot, type Mood, type Outfit } from './Mascot';
-
-export function Wordmark({ small = false, color }: { small?: boolean; color?: string }) {
-  const p = usePalette();
-  const width = small ? 90 : 108;
-  return <Image accessible accessibilityLabel="Wupiko" resizeMode="contain" source={require('../../assets/brand/wordmark.png')} style={{ width, height: width * .282, tintColor: color ?? p.ink }} />;
-}
 
 export function Cloud({ width, color = '#FFFFFF', opacity = .9 }: { width: number; color?: string; opacity?: number }) {
   return <Svg width={width} height={width * .5} viewBox="0 0 100 50" opacity={opacity}>
@@ -105,32 +99,3 @@ export function Icon({ name, color, size = 22, weight = 2 }: { name: IconName; c
   return <Svg accessible={false} width={size} height={size} viewBox="0 0 24 24"><Path d={paths[name]} fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" /></Svg>;
 }
 
-const petals = ['#FF8FB1', '#A98BFF', '#FF6B4A', '#6EC6FF', '#FFC83D', '#FF9F45'];
-
-/** One garden plant: a bloom for an on-time morning, a bud for a late one, a droop for a miss. */
-export function Plant({ outcome, tint, size = 26 }: { outcome: 'onTime' | 'late' | 'missed'; tint: number; size?: number }) {
-  const color = petals[tint % petals.length];
-  return <Svg width={size} height={size * 1.4} viewBox="0 0 20 28">
-    {outcome === 'missed' ? <>
-      <Path d="M10 28 Q10 18 14 15" stroke="#9C8F7A" strokeWidth={2} fill="none" strokeLinecap="round" />
-      <Circle cx={15} cy={16} r={2.6} fill="#BDB2A0" />
-    </> : <>
-      <Path d="M10 28 V12" stroke="#2F8F5B" strokeWidth={2} strokeLinecap="round" />
-      <Path d="M10 21 Q4 18 3 21 Q6 24 10 21 Z" fill="#5FD3A8" />
-      {outcome === 'onTime' ? <>
-        {[0, 72, 144, 216, 288].map((a) => <Circle key={a} cx={10 + 4.2 * Math.cos((a - 90) * Math.PI / 180)} cy={9 + 4.2 * Math.sin((a - 90) * Math.PI / 180)} r={3.4} fill={color} stroke="#2E2340" strokeWidth={0.9} />)}
-        <Circle cx={10} cy={9} r={2.4} fill="#FFE27A" stroke="#2E2340" strokeWidth={0.9} />
-      </> : <Path d="M10 6 Q14 10 10 14 Q6 10 10 6 Z" fill={color} stroke="#2E2340" strokeWidth={0.9} />}
-    </>}
-  </Svg>;
-}
-
-/** The streak made visible: the last mornings planted along the hills. */
-export function Garden({ days, max = 9 }: { days: { key: string; outcome: 'onTime' | 'late' | 'missed' }[]; max?: number }) {
-  const shown = days.slice(-max);
-  return <View pointerEvents="none" style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 1 }}>
-    {shown.map((d, i) => <View key={d.key} style={{ marginBottom: (i % 3) * 3 }}>
-      <Plant outcome={d.outcome} tint={d.key.split('-').reduce((a, b) => a + Number(b), 0)} size={i === shown.length - 1 ? 26 : 22} />
-    </View>)}
-  </View>;
-}

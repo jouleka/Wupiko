@@ -104,7 +104,7 @@ struct Morning: Codable {
   let outcome: MorningOutcome
 }
 
-/// Append-only record of how each alarm occurrence ended, for the streak.
+/// Append-only record of how each alarm occurrence ended, for the island.
 struct MorningLog {
   private static let limit = 500
 

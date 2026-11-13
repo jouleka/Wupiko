@@ -55,7 +55,7 @@ enum BackupPlan {
   }
 }
 
-/// How each morning went, for the streak. Pure so it can be tested off-device.
+/// How each morning went, for the island. Pure so it can be tested off-device.
 enum MorningOutcome: String, Codable {
   case onTime, late, missed
 

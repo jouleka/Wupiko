@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Linking, Platform, Text, View, useWindowDimensions } from 'react-native';
-import { rewards, summarize, wornOutfit } from '../src/streak';
+import { goodMornings, outfitsEarned, pieces, wornOutfit } from '../src/island';
 import { WupikoArt } from '../src/ui/Mascot';
 import { useWupiko } from '../src/store';
 import type { OutfitChoice, Settings, Sound, Theme } from '../src/types';
@@ -22,31 +22,33 @@ const soundLook: Record<Sound, { icon: IconName; color: string }> = {
 };
 const sounds = Object.entries(soundNames).map(([value, title]) => ({ value: value as Sound, title, ...soundLook[value as Sound] }));
 
-/** Streak rewards Wupiko can wear. Locked ones show what it takes. */
-function Wardrobe({ best, current, onTime, choice, onPick }: { best: number; current: number; onTime: number; choice: OutfitChoice; onPick: (o: OutfitChoice) => void }) {
+/** Outfits from island milestones. Locked ones show what it takes. */
+function Wardrobe({ growth, choice, onPick }: { growth: number; choice: OutfitChoice; onPick: (o: OutfitChoice) => void }) {
   const p = usePalette();
-  const worn = wornOutfit(choice, best);
+  const worn = wornOutfit(choice, growth);
+  const earned = outfitsEarned(growth).length;
   const { width } = useWindowDimensions();
   // Three per row inside the 20pt screen gutters, with 8pt gaps.
   const tile = Math.floor((Math.min(width, 650) - 40 - 16) / 3);
-  const tiles = [{ outfit: 'none' as const, title: 'Just me', days: 0 }, ...rewards.map((r) => ({ outfit: r.outfit, title: r.title, days: r.days }))];
+  const tiles = [{ outfit: 'none' as const, title: 'Just me', days: 0 },
+    ...pieces.filter((piece) => piece.outfit).map((piece) => ({ outfit: piece.outfit!.id, title: piece.outfit!.title, days: piece.at }))];
   return <View style={{ gap: 12 }}>
     <View style={[row, { gap: 8 }]}>
-      {[{ n: current, label: 'streak' }, { n: best, label: 'best' }, { n: onTime, label: 'flowers' }].map((stat) => <View key={stat.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 18, backgroundColor: p.soft }}>
+      {[{ n: growth, label: growth === 1 ? 'good morning' : 'good mornings' }, { n: earned, label: earned === 1 ? 'outfit' : 'outfits' }].map((stat) => <View key={stat.label} style={{ flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 18, backgroundColor: p.soft }}>
         <Text style={{ color: p.ink, fontFamily: display, fontSize: 24 }}>{stat.n}</Text>
         <Text style={{ color: p.muted, fontWeight: '800', fontSize: 12, textTransform: 'uppercase', letterSpacing: .6 }}>{stat.label}</Text>
       </View>)}
     </View>
     <View style={[row, { flexWrap: 'wrap', gap: 8 }]}>
       {tiles.map((t) => {
-        const open = best >= t.days, on = worn === t.outfit;
+        const open = growth >= t.days, on = worn === t.outfit;
         return <Squish key={t.outfit} accessibilityRole="radio" accessibilityState={{ checked: on, disabled: !open }}
-          accessibilityLabel={open ? t.title : `${t.title}, locked. Reach a ${t.days} morning streak.`}
+          accessibilityLabel={open ? t.title : `${t.title}, locked. Comes with ${t.days} good mornings.`}
           onPress={() => { if (open) { haptic(); onPick(t.outfit); } }}
           style={{ width: tile, alignItems: 'center', paddingTop: 8, paddingBottom: 10, borderRadius: 22, borderWidth: 2, borderBottomWidth: 4,
             borderColor: on ? candy.mint : p.rule, backgroundColor: on ? (p.dark ? '#1F3A33' : '#E3F8EF') : p.panel }}>
           <View style={{ opacity: open ? 1 : .3 }}><WupikoArt face={open ? 'happy' : 'sleepy'} size={64} outfit={t.outfit} /></View>
-          <Text numberOfLines={1} style={{ color: open ? p.ink : p.muted, fontWeight: '800', fontSize: 13, marginTop: 2 }}>{open ? t.title : `${t.days}-day streak`}</Text>
+          <Text numberOfLines={1} style={{ color: open ? p.ink : p.muted, fontWeight: '800', fontSize: 13, marginTop: 2 }}>{open ? t.title : `${t.days} mornings`}</Text>
           {!open && <View style={{ position: 'absolute', top: 6, right: 8, backgroundColor: p.soft, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 }}><Text style={{ fontSize: 11, fontWeight: '900', color: p.muted }}>LOCKED</Text></View>}
         </Squish>;
       })}
@@ -67,7 +69,7 @@ function Status({ ok, children }: { ok: boolean; children: string }) {
 export default function Preferences() {
   const p = usePalette();
   const { settings, permissions, requestPermission, openSettings, updateSettings, mornings } = useWupiko();
-  const summary = summarize(mornings ?? []);
+  const growth = goodMornings(mornings ?? []);
   const { run, busy } = useAction();
   const [boops, setBoops] = useState(0);
   function change(patch: Partial<Settings>) {
@@ -81,8 +83,8 @@ export default function Preferences() {
   return <Screen header={<Bar><CircleButton label="Back to alarms" icon="back" onPress={back} /></Bar>}>
     <Heading kicker="Make it yours">Settings</Heading>
     <View style={{ gap: 28 }}>
-      <Field title="Wupiko’s wardrobe" icon="heart" color={candy.pink} note="Wake up on time to keep your streak and unlock new outfits. Missed mornings reset the streak, but outfits stay yours.">
-        <Wardrobe best={summary.best} current={summary.current} onTime={summary.onTime} choice={settings.outfit} onPick={(outfit) => change({ outfit })} />
+      <Field title="Wupiko’s wardrobe" icon="heart" color={candy.pink} note="Outfits come with island milestones. Once earned, they’re yours to keep.">
+        <Wardrobe growth={growth} choice={settings.outfit} onPick={(outfit) => change({ outfit })} />
       </Field>
       <Field title="Appearance" icon="palette" color={candy.lilac}><Choices label="Theme" options={themes} value={settings.theme} onChange={(theme) => change({ theme })} /></Field>
       <Field title="Default alarm sound" icon="sound" color={candy.coral}><Choices label="Default alarm sound" options={sounds} value={settings.sound} onChange={(sound) => change({ sound })} /></Field>
@@ -101,7 +103,7 @@ export default function Preferences() {
         </Card>
       </Field>
       <Card tint={p.dark ? '#3C2B3F' : '#FFF1C9'} style={[row, { gap: 14, borderColor: p.dark ? '#5A4060' : '#F5D88A' }]}>
-        <Mascot mood="happy" size={84} animate interactive onPoke={setBoops} outfit={wornOutfit(settings.outfit, summary.best)} />
+        <Mascot mood="happy" size={84} animate interactive onPoke={setBoops} outfit={wornOutfit(settings.outfit, growth)} />
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={{ color: p.ink, fontFamily: display, fontSize: 22, letterSpacing: -.4 }}>About Wupiko</Text>
           <Copy muted size={14} style={{ fontWeight: '600' }}>A tiny sunseed who takes waking you up very seriously. Your alarms never leave your phone.</Copy>

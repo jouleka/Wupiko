@@ -29,7 +29,7 @@ export function hash(text: string) {
 }
 
 /** Deterministic 0..1 noise, so layouts stay pure across renders. */
-export function noise(seed: number, i: number, k = 0) {
+function noise(seed: number, i: number, k = 0) {
   const v = Math.sin(seed * 0.0001 + i * 12.9898 + k * 78.233) * 43758.5453;
   return v - Math.floor(v);
 }

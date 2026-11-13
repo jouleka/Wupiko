@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { islandOf, pieces } from '../src/island';
+import { goodMornings, islandOf, newPieces, outfitsEarned, pieces, wornOutfit } from '../src/island';
 import type { Morning, Outcome } from '../src/types';
 
 const now = new Date(2026, 10, 20, 9).getTime();
@@ -52,4 +52,27 @@ test('a month of mornings earns everything', () => {
   const island = islandOf(month, now);
   assert.equal(island.earned.length, pieces.length);
   assert.equal(island.next, undefined);
+});
+
+test('outfits come with island milestones and are never lost', () => {
+  assert.deepEqual(outfitsEarned(2), []);
+  assert.deepEqual(outfitsEarned(7).map((o) => o.id), ['sprout', 'flowers']);
+  assert.equal(outfitsEarned(30).length, 4);
+});
+
+test('Wupiko wears the newest earned outfit unless the user picked another earned one', () => {
+  assert.equal(wornOutfit('auto', 0), 'none');
+  assert.equal(wornOutfit('auto', 8), 'flowers');
+  assert.equal(wornOutfit('sprout', 8), 'sprout');
+  assert.equal(wornOutfit('crown', 8), 'flowers');
+  assert.equal(wornOutfit('none', 30), 'none');
+});
+
+test('the check-in celebrates exactly the pieces that just appeared', () => {
+  assert.deepEqual(newPieces(2, 3).map((p) => p.id), ['bush']);
+  assert.deepEqual(newPieces(3, 3), []);
+});
+
+test('missed mornings and repeat wake-ups do not add good mornings', () => {
+  assert.equal(goodMornings([day(2, 'missed'), day(1, 'onTime', 7), day(1, 'late', 9)]), 1);
 });

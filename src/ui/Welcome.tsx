@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Platform, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useWupiko } from '../store';
-import { Scene, Wordmark } from './Art';
+import { Scene } from './Art';
 import { Bar, Button, Copy, Screen, useAction } from './components';
 import { usePalette } from './theme';
 
@@ -26,7 +26,7 @@ export function Welcome() {
       if (permissions.alarm === 'undetermined') void run(async () => { await requestPermission(); await finish(); }, 'Couldn’t request alarm access');
     }
   };
-  return <Screen header={<Bar><Wordmark /><Dots step={access ? 1 : 0} /></Bar>} footer={
+  return <Screen header={<Bar><View /><Dots step={access ? 1 : 0} /></Bar>} footer={
     <View style={{ gap: 4 }}>
       <Button testID={access ? 'allow-alarms' : 'welcome-continue'} title={access ? 'Allow alarms' : 'Let’s wake up'} icon={access ? 'bell' : 'sun'} disabled={busy} onPress={() => {
         if (access) void run(async () => { await requestPermission(); await finish(); }, 'Couldn’t request alarm access');

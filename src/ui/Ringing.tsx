@@ -4,7 +4,7 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { kindOf } from '../kind';
 import { useWupiko } from '../store';
-import { Sky, Wordmark } from './Art';
+import { Sky } from './Art';
 import { Mascot } from './Mascot';
 import { Button, haptic, useAction } from './components';
 import { useFeedback } from './Feedback';
@@ -46,7 +46,6 @@ function ActiveAlarm({ id }: { id: string }) {
     <View style={{ flex: 1, backgroundColor: s.bottom }}>
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0 }}><Sky phase="dawn" height={height} radius={0} /></View>
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={{ alignItems: 'center', paddingTop: 12 }}><Wordmark small color={s.text} /></View>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 24 }}>
           <Text accessibilityRole="header" style={{ fontFamily: display, color: s.text, fontSize: 84, letterSpacing: -4 }}>{clock.time}<Text style={{ fontSize: 28, letterSpacing: -.5 }}>{clock.period ? ' ' + clock.period : ''}</Text></Text>
           <View style={{ backgroundColor: 'rgba(255,255,255,.6)', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 99 }}>

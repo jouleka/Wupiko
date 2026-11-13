@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -83,11 +83,6 @@ export function Heading({ children, kicker }: { children: ReactNode; kicker?: st
     <Copy heading size={38}>{children}</Copy>
   </View>;
 }
-export function Rule() {
-  const p = usePalette();
-  return <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: p.rule }} />;
-}
-
 export function Card({ children, style, tint }: { children: ReactNode; style?: StyleProp<ViewStyle>; tint?: string }) {
   const p = usePalette();
   return <View style={[{ backgroundColor: tint ?? p.panel, borderRadius: 26, padding: 18, borderWidth: 2, borderColor: p.rule, borderBottomWidth: 5 }, style]}>{children}</View>;

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import Storage from 'expo-sqlite/kv-store';
 import { collect, readTrips, startTrip, type Trip } from './finds';
-import { dayKey } from './streak';
+import { dayKey } from './island';
 
 const key = 'wupiko.trips.v1';
 let trips: Trip[] = [];

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import type { Find, Trip } from '../finds';
-import { dayKey } from '../streak';
+import { dayKey } from '../island';
 import { Sky } from './Art';
 import { Mascot } from './Mascot';
 import { candy, display, skies } from './theme';

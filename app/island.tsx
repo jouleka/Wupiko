@@ -1,8 +1,7 @@
 import { router } from 'expo-router';
 import { Text, View, useWindowDimensions } from 'react-native';
-import { islandOf, pieces, weatherLine } from '../src/island';
+import { islandOf, pieces, weatherLine, wornOutfit } from '../src/island';
 import { useWupiko } from '../src/store';
-import { summarize, wornOutfit } from '../src/streak';
 import { Icon } from '../src/ui/Art';
 import { Bar, Card, CircleButton, Copy, Heading, Screen, row } from '../src/ui/components';
 import { IslandArt } from '../src/ui/IslandArt';
@@ -13,17 +12,16 @@ export default function IslandScreen() {
   const p = usePalette();
   const { mornings, settings } = useWupiko();
   const { width } = useWindowDimensions();
-  const summary = summarize(mornings ?? []);
   const island = islandOf(mornings ?? []);
   const have = new Set(island.earned.map((e) => e.id));
   const art = Math.min(width, 650) - 40;
   const back = () => router.canGoBack() ? router.back() : router.replace('/');
   const left = island.next ? island.next.at - island.growth : 0;
   const prev = [...island.earned].pop()?.at ?? 0;
-  return <Screen header={<Bar><CircleButton label="Back" icon="back" onPress={back} /></Bar>}>
+  return <Screen header={<Bar><CircleButton label="Back" icon="back" onPress={back} /><CircleButton label="Wupiko’s album" icon="heart" onPress={() => router.push('/album')} /></Bar>}>
     <Heading kicker={`${island.growth} good ${island.growth === 1 ? 'morning' : 'mornings'}`}>Wupiko’s island</Heading>
     <View style={{ gap: 16 }}>
-      <IslandArt width={art} have={have} weather={island.weather} outfit={wornOutfit(settings.outfit, summary.best)} />
+      <IslandArt width={art} have={have} weather={island.weather} outfit={wornOutfit(settings.outfit, island.growth)} />
       <Card style={[row, { gap: 10 }]}>
         <Icon name={island.weather === 'sunny' ? 'sun' : 'moon'} color={island.weather === 'sunny' ? '#F5A300' : '#7F8CA3'} size={22} weight={2.4} />
         <Copy size={15} style={{ flex: 1, fontWeight: '600' }}>{island.growth ? weatherLine[island.weather] : 'An empty little island. Every good morning grows something here.'}</Copy>
@@ -46,6 +44,7 @@ export default function IslandScreen() {
             <View style={{ flex: 1, gap: 1 }}>
               <Text style={{ color: p.ink, fontWeight: '800', fontSize: 15 }}>{piece.title}</Text>
               <Copy muted size={13}>{got ? piece.blurb : `After ${piece.at} good ${piece.at === 1 ? 'morning' : 'mornings'}`}</Copy>
+              {piece.outfit && <Text style={{ color: candy.pink, fontWeight: '800', fontSize: 12 }}>+ {piece.outfit.title} for Wupiko</Text>}
             </View>
           </View>;
         })}
