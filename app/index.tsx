@@ -5,10 +5,12 @@ import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated'
 import { useWupiko } from '../src/store';
 import { findById, finds, stageOf, untilNext } from '../src/finds';
 import { useTrips } from '../src/trips';
+import { islandOf } from '../src/island';
+import { IslandArt } from '../src/ui/IslandArt';
 import { Keepsake } from '../src/ui/Keepsake';
 import { countdown as timer } from '../src/ui/Postcard';
 import { kindOf } from '../src/kind';
-import type { Alarm } from '../src/types';
+import type { Alarm, Morning } from '../src/types';
 import { Garden, Icon, Mascot, Plant, Scene, Sky, Wordmark, type IconName, type Outfit } from '../src/ui/Art';
 import { WupikoArt } from '../src/ui/Mascot';
 import { dayKey, nextReward, summarize, wornOutfit, type Summary } from '../src/streak';
@@ -92,6 +94,23 @@ function TripCard() {
     <View style={{ flex: 1, gap: 2 }}>
       <Text style={{ color: p.ink, fontWeight: '800', fontSize: 14 }}>{live && find ? `Wupiko’s trip to ${find.place}` : 'Wupiko’s album'}</Text>
       <Text style={{ color: p.muted, fontWeight: '700', fontSize: 13 }}>{live ? status : `${owned} of ${finds.length} keepsakes found`}</Text>
+    </View>
+    <Icon name="arrow" color={p.muted} size={18} />
+  </Pressable>;
+}
+
+/** A peek at the island, which grows with every good morning. */
+function IslandCard({ mornings, outfit }: { mornings: Morning[]; outfit: Outfit }) {
+  const p = usePalette();
+  const island = islandOf(mornings);
+  const have = new Set(island.earned.map((e) => e.id));
+  const left = island.next ? island.next.at - island.growth : 0;
+  return <Pressable testID="island-card" accessibilityRole="button" accessibilityLabel={`Wupiko’s island, ${island.growth} good mornings`} onPress={() => router.push('/island')}
+    style={({ pressed }) => [row, { gap: 12, marginTop: 12, padding: 8, paddingRight: 14, borderRadius: 22, borderWidth: 2, borderBottomWidth: 4, borderColor: p.rule, backgroundColor: p.panel, opacity: pressed ? .75 : 1 }]}>
+    <IslandArt width={96} have={have} weather={island.weather} outfit={outfit} />
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={{ color: p.ink, fontWeight: '800', fontSize: 14 }}>Wupiko’s island</Text>
+      <Text style={{ color: p.muted, fontWeight: '700', fontSize: 13 }}>{island.next ? `${left === 1 ? 'One more morning' : `${left} more mornings`} → ${island.next.title}` : 'All grown. Look at it!'}</Text>
     </View>
     <Icon name="arrow" color={p.muted} size={18} />
   </Pressable>;
@@ -193,6 +212,7 @@ export default function Home() {
     {sorted.length ? <>
       <Hero next={next} count={alarms.length} summary={summary} outfit={outfit} />
       <TripCard />
+      <IslandCard mornings={mornings ?? []} outfit={outfit} />
       <NextReward summary={summary} />
       <View style={[row, { justifyContent: 'space-between', marginTop: 24, marginBottom: 12 }]}>
         <Copy heading size={24}>Your alarms</Copy>

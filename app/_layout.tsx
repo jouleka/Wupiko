@@ -26,6 +26,7 @@ export default function Layout() {
           <Stack.Screen name="settings" />
           <Stack.Screen name="find" />
           <Stack.Screen name="album" />
+          <Stack.Screen name="island" />
         </Stack>
         <Ringing />
         <CheckIn />
