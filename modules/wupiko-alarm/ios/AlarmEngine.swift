@@ -28,8 +28,37 @@ actor AlarmEngine {
     else { queue.removeFirst().resume() }
   }
 
+  // Reading `authorizationState` right after the user answers the AlarmKit
+  // prompt can block forever on a real device. Read it once (at launch, where it
+  // is reliable), then keep it current from the request result and from
+  // `authorizationUpdates`, which also covers changes made in Settings.
+  private var knownAuthorization: AlarmManager.AuthorizationState?
+  private var watchingAuthorization = false
+
+  private func setAuthorization(_ state: AlarmManager.AuthorizationState) {
+    knownAuthorization = state
+  }
+
+  private func watchAuthorization() {
+    guard !watchingAuthorization else { return }
+    watchingAuthorization = true
+    Task { [weak self] in
+      for await state in AlarmManager.shared.authorizationUpdates {
+        await self?.setAuthorization(state)
+      }
+    }
+  }
+
+  private var authorizationState: AlarmManager.AuthorizationState {
+    if let knownAuthorization { return knownAuthorization }
+    let state = manager.authorizationState
+    knownAuthorization = state
+    watchAuthorization()
+    return state
+  }
+
   private var permission: String {
-    switch manager.authorizationState {
+    switch authorizationState {
     case .authorized: return "granted"
     case .notDetermined: return "undetermined"
     case .denied: return "denied"
@@ -38,7 +67,8 @@ actor AlarmEngine {
   }
 
   func authorize() async throws {
-    _ = try await manager.requestAuthorization()
+    watchAuthorization()
+    knownAuthorization = try await manager.requestAuthorization()
   }
 
   private func schedule(_ alarm: StoredAlarm, id: UUID) async throws {
