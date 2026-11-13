@@ -4,7 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWupiko } from '../store';
 import { dayKey, justUnlocked, summarize, wornOutfit } from '../streak';
 import { Icon, Sky, Wordmark } from './Art';
+import { router } from 'expo-router';
 import { useLightAvailability } from '../light';
+import { beginTodaysTrip } from '../trips';
 import { FeedingStage, LightAsk } from './Feeding';
 import { RitualStage, hash, ritualCopy, ritualOrder, type Ritual } from './Rituals';
 import { row, useAction } from './components';
@@ -60,6 +62,9 @@ function WakeUp({ id }: { id: string }) {
     if (!done) return;
     const timer = setTimeout(() => void run(async () => {
       await checkIn(id);
+      // The first wake-up of the day brings Wupiko home from its night trip.
+      const trip = await beginTodaysTrip().catch(() => false);
+      if (trip) setTimeout(() => router.push('/find'), 1400);
       const after = summarize(getSnapshot().mornings ?? []);
       const unlock = justUnlocked(before.best, after.best);
       if (unlock) {

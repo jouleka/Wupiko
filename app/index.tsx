@@ -3,11 +3,15 @@ import { router } from 'expo-router';
 import { Alert, Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { useWupiko } from '../src/store';
+import { findById, finds, stageOf, untilNext } from '../src/finds';
+import { useTrips } from '../src/trips';
+import { Keepsake } from '../src/ui/Keepsake';
+import { countdown as timer } from '../src/ui/Postcard';
 import { kindOf } from '../src/kind';
 import type { Alarm } from '../src/types';
 import { Garden, Icon, Mascot, Plant, Scene, Sky, Wordmark, type IconName, type Outfit } from '../src/ui/Art';
 import { WupikoArt } from '../src/ui/Mascot';
-import { nextReward, summarize, wornOutfit, type Summary } from '../src/streak';
+import { dayKey, nextReward, summarize, wornOutfit, type Summary } from '../src/streak';
 import { Bar, Button, Card, CircleButton, Copy, Screen, Sticker, Toggle, haptic, row, useAction } from '../src/ui/components';
 import { Welcome } from '../src/ui/Welcome';
 import { candy, display, phaseOf, skies, usePalette, type Phase } from '../src/ui/theme';
@@ -67,6 +71,32 @@ function StreakPill({ summary }: { summary: Summary }) {
 }
 
 /** What the next milestone unlocks, so there's always something to chase. */
+/** This morning's find while it is still unfolding, otherwise a way into the album. */
+function TripCard() {
+  const p = usePalette();
+  const trips = useTrips();
+  const now = useNow(1000);
+  if (!trips.length) return null;
+  const trip = [...trips].sort((a, b) => b.at - a.at)[0];
+  const find = findById(trip.find);
+  const stage = stageOf(trip, now);
+  const live = trip.day === dayKey(now) && (stage === 'postcard' || stage === 'story' || stage === 'unpack');
+  const owned = new Set(trips.filter((t) => t.collected).map((t) => t.find)).size;
+  const next = untilNext(trip, now) ?? 0;
+  const status = stage === 'unpack' ? `Ready to unpack! · ${timer(next)} left` : stage === 'story' ? `Story is in · unpacks in ${timer(next)}` : `Story in ${timer(next)}`;
+  return <Pressable testID="trip-card" accessibilityRole="button" onPress={() => router.push(live ? '/find' : '/album')}
+    style={({ pressed }) => [row, { gap: 12, marginTop: 12, padding: 10, paddingRight: 14, borderRadius: 22, borderWidth: 2, borderBottomWidth: 4, borderColor: live && stage === 'unpack' ? candy.sun : p.rule, backgroundColor: p.panel, opacity: pressed ? .75 : 1 }]}>
+    <View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: p.soft, alignItems: 'center', justifyContent: 'center' }}>
+      {live || !find ? <WupikoArt face="happy" size={46} /> : <Keepsake id={find.id} size={40} locked={stage !== 'collected'} />}
+    </View>
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={{ color: p.ink, fontWeight: '800', fontSize: 14 }}>{live && find ? `Wupiko’s trip to ${find.place}` : 'Wupiko’s album'}</Text>
+      <Text style={{ color: p.muted, fontWeight: '700', fontSize: 13 }}>{live ? status : `${owned} of ${finds.length} keepsakes found`}</Text>
+    </View>
+    <Icon name="arrow" color={p.muted} size={18} />
+  </Pressable>;
+}
+
 function NextReward({ summary }: { summary: Summary }) {
   const p = usePalette();
   const reward = nextReward(summary.current);
@@ -162,6 +192,7 @@ export default function Home() {
     </Pressable>}
     {sorted.length ? <>
       <Hero next={next} count={alarms.length} summary={summary} outfit={outfit} />
+      <TripCard />
       <NextReward summary={summary} />
       <View style={[row, { justifyContent: 'space-between', marginTop: 24, marginBottom: 12 }]}>
         <Copy heading size={24}>Your alarms</Copy>
