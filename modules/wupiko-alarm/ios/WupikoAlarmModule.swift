@@ -21,10 +21,13 @@ private struct AlarmInput: Record {
 
 public final class WupikoAlarmModule: Module {
   private var observations: [Task<Void, Never>] = []
+  private lazy var lightMeter = LightMeter { [weak self] lux in
+    self?.sendEvent("onLight", ["lux": lux])
+  }
 
   public func definition() -> ModuleDefinition {
     Name("WupikoAlarm")
-    Events("onAlarmChange")
+    Events("onAlarmChange", "onLight")
 
     AsyncFunction("getState") { () async throws -> [String: Any] in
       try await AlarmEngine.shared.state()
@@ -52,9 +55,25 @@ public final class WupikoAlarmModule: Module {
       try await AlarmEngine.shared.checkIn(uuid)
     }
 
+    AsyncFunction("lightAvailability") { () -> String in
+      LightMeter.availability
+    }
+    AsyncFunction("requestLightAccess") { () async -> Bool in
+      await LightMeter.requestAccess()
+    }
+    AsyncFunction("startLight") { () throws in
+      try self.lightMeter.start()
+    }
+    AsyncFunction("stopLight") {
+      self.lightMeter.stop()
+    }
+
     OnStartObserving("onAlarmChange") { self.observe() }
     OnStopObserving("onAlarmChange") { self.stopObserving() }
-    OnDestroy { self.stopObserving() }
+    OnDestroy {
+      self.stopObserving()
+      self.lightMeter.stop()
+    }
   }
 
   private func observe() {

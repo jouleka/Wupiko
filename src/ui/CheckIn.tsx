@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWupiko } from '../store';
 import { dayKey, justUnlocked, summarize, wornOutfit } from '../streak';
 import { Icon, Sky, Wordmark } from './Art';
+import { useLightAvailability } from '../light';
+import { FeedingStage, LightAsk } from './Feeding';
 import { RitualStage, hash, ritualCopy, ritualOrder, type Ritual } from './Rituals';
 import { row, useAction } from './components';
 import { useFeedback } from './Feedback';
@@ -41,6 +43,13 @@ function WakeUp({ id }: { id: string }) {
   const [seed] = useState(() => hash(id + dayKey(Date.now())));
   // Same ritual if the screen reopens this morning; a different one tomorrow. Boops suit screen readers best.
   const ritual: Ritual = screenReader ? 'chase' : ritualOrder[seed % ritualOrder.length];
+  // Feeding Wupiko light is the check-in. Without a light reading (no camera, access
+  // declined, or "Not now") the morning falls back to a ritual so nobody is locked out.
+  const light = useLightAvailability();
+  const [skipLight, setSkipLight] = useState(false);
+  const { busy: asking, run: runAsk } = useAction();
+  const mode = skipLight ? 'ritual' : light.availability === 'ready' ? 'light'
+    : light.availability === 'undetermined' ? 'ask' : light.availability == null ? 'loading' : 'ritual';
   const done = progress >= 1;
   const outfit = wornOutfit(settings.outfit, before.best);
   useEffect(() => {
@@ -70,7 +79,9 @@ function WakeUp({ id }: { id: string }) {
   }, [done]);
   const left = timeLeft(alarm?.nagAt, now);
   const s = skies[done ? 'day' : 'dawn'];
-  const copy = ritualCopy[ritual];
+  const copy = mode === 'light' ? { title: 'Wupiko is frozen!', hint: 'Turn on the room lights or face a window for a few seconds.' }
+    : mode === 'ask' ? { title: 'Wupiko runs on sunshine', hint: 'One quick thing before breakfast.' }
+    : mode === 'loading' ? { title: 'Good morning!', hint: '' } : ritualCopy[ritual];
   return <Modal visible animationType="fade" onRequestClose={() => {}}>
     <View style={{ flex: 1, backgroundColor: s.bottom }}>
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0 }}><Sky phase={done ? 'day' : 'dawn'} height={screen} radius={0} /></View>
@@ -85,7 +96,11 @@ function WakeUp({ id }: { id: string }) {
           <Text style={{ color: s.sub, fontSize: 17, fontWeight: '600', textAlign: 'center' }}>{done ? 'Checking in…' : copy.hint}</Text>
         </View>
         <View style={{ flex: 1, margin: 16, borderRadius: 30, overflow: 'hidden' }} onLayout={(e) => setStage({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
-          {stage.width > 0 && <RitualStage key={ritual} ritual={ritual} width={stage.width} height={stage.height} seed={seed} outfit={outfit} done={done}
+          {stage.width > 0 && mode === 'light' && <FeedingStage id={id} width={stage.width} height={stage.height} outfit={outfit} done={done}
+            onProgress={setProgress} />}
+          {stage.width > 0 && mode === 'ask' && <LightAsk width={stage.width} height={stage.height} busy={asking}
+            onAllow={() => void runAsk(light.ask)} onSkip={() => setSkipLight(true)} />}
+          {stage.width > 0 && mode === 'ritual' && <RitualStage key={ritual} ritual={ritual} width={stage.width} height={stage.height} seed={seed} outfit={outfit} done={done}
             onProgress={(p) => setProgress((old) => Math.max(old, p))} />}
         </View>
         <View style={{ paddingHorizontal: 40, paddingBottom: 18 }}>

@@ -14,7 +14,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSAlarmKitUsageDescription": "Wupiko schedules alarms to wake you at the times you choose.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Wupiko uses the camera only to measure how bright it is when you feed it light. No photos or video are taken, stored or sent."
       }
     },
     "android": {

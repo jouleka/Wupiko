@@ -29,13 +29,22 @@ class WupikoAlarmModule : Module() {
     private var needsRestore = true
     private val ctx: Context get() = requireNotNull(appContext.reactContext).applicationContext
     private val listener: () -> Unit = { sendEvent("onAlarmChange", emptyMap<String, Any>()) }
+    private val lightMeter by lazy { LightMeter(ctx) { lux -> sendEvent("onLight", mapOf("lux" to lux)) } }
 
     override fun definition() = ModuleDefinition {
         Name("WupikoAlarm")
-        Events("onAlarmChange")
+        Events("onAlarmChange", "onLight")
         OnStartObserving { AlarmEngine.listeners.add(listener) }
         OnStopObserving { AlarmEngine.listeners.remove(listener) }
-        OnDestroy { AlarmEngine.listeners.remove(listener) }
+        OnDestroy {
+            AlarmEngine.listeners.remove(listener)
+            lightMeter.stop()
+        }
+
+        AsyncFunction("lightAvailability") { lightMeter.availability }
+        AsyncFunction("requestLightAccess") { lightMeter.availability == "ready" }
+        AsyncFunction("startLight") { lightMeter.start() }
+        AsyncFunction("stopLight") { lightMeter.stop() }
 
         AsyncFunction("getState") {
             RingService.channel(ctx)
