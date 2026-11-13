@@ -28,6 +28,27 @@ class RingActivity : Activity() {
         @Suppress("DEPRECATION")
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        if (savedInstanceState == null) handleStop(intent)
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        handleStop(intent)
+    }
+
+    // The notification's Stop action lands here so stopping also opens Wupiko.
+    private fun handleStop(intent: android.content.Intent?) {
+        if (intent?.action != AlarmEngine.STOP) return
+        intent.data?.lastPathSegment?.let { stopAndOpen(it) }
+    }
+
+    private fun stopAndOpen(id: String) {
+        AlarmEngine.stop(this, id)
+        RingService.clearFallback(this, id)
+        // Go straight to the check-in ritual so the right next move is obvious.
+        packageManager.getLaunchIntentForPackage(packageName)?.let {
+            runCatching { startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        }
     }
 
     override fun onStart() {
@@ -123,12 +144,7 @@ class RingActivity : Activity() {
                 }, null)
             setOnClickListener {
                 performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-                AlarmEngine.stop(this@RingActivity, alarm.id)
-                RingService.clearFallback(this@RingActivity, alarm.id)
-                // Go straight to the check-in ritual so the right next move is obvious.
-                packageManager.getLaunchIntentForPackage(packageName)?.let {
-                    runCatching { startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                }
+                stopAndOpen(alarm.id)
             }
         }
         column.addView(stop, LinearLayout.LayoutParams(-1, -2))

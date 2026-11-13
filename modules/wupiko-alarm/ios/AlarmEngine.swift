@@ -68,7 +68,9 @@ actor AlarmEngine {
     }
     let attributes = AlarmAttributes(presentation: .init(alert: alert), metadata: WupikoMetadata(),
                                      tintColor: Color(red: 255 / 255, green: 107 / 255, blue: 74 / 255))
+    // Stopping the alarm opens Wupiko so the wake-up check-in is waiting.
     let config = AlarmManager.AlarmConfiguration.alarm(schedule: schedule, attributes: attributes,
+                                                        stopIntent: WupikoAlarmIntents.stopAndOpen?(id),
                                                         sound: .named(sound + ".wav"))
     _ = try await manager.schedule(id: id, configuration: config)
   }

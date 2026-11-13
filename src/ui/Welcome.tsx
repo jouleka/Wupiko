@@ -20,7 +20,11 @@ export function Welcome() {
   const finish = () => updateSettings({ onboarded: true });
   const begin = () => {
     if (permissions.alarm === 'granted' && permissions.notifications !== false) void run(finish);
-    else setAccess(true);
+    else {
+      setAccess(true);
+      // Ask right away so the system prompt appears without an extra tap.
+      if (permissions.alarm === 'undetermined') void run(async () => { await requestPermission(); await finish(); }, 'Couldn’t request alarm access');
+    }
   };
   return <Screen header={<Bar><Wordmark /><Dots step={access ? 1 : 0} /></Bar>} footer={
     <View style={{ gap: 4 }}>

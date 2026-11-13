@@ -143,8 +143,10 @@ class RingService : Service() {
                     .toBundle() else null
                 val open = PendingIntent.getActivity(ctx, 0, Intent(ctx, RingActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP), PI_FLAGS, options)
-                val stop = PendingIntent.getBroadcast(ctx, 0, Intent(ctx, AlarmDelivery::class.java)
-                    .setAction(AlarmEngine.STOP).setData(Uri.parse("wupiko-native://stop/${alarm.id}")), PI_FLAGS)
+                // Stopping from the notification also opens Wupiko for the check-in.
+                val stop = PendingIntent.getActivity(ctx, 1, Intent(ctx, RingActivity::class.java)
+                    .setAction(AlarmEngine.STOP).setData(Uri.parse("wupiko-native://stop/${alarm.id}"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP), PI_FLAGS, options)
                 // On 14+, the system substitutes a heads-up presentation when special access is off.
                 builder.setFullScreenIntent(open, true).setContentIntent(open)
                     .addAction(Notification.Action.Builder(null, "Stop Alarm", stop).build())

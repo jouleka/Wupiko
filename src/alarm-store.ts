@@ -31,7 +31,7 @@ function readSettings(raw: string | null): Settings {
   };
 }
 
-export function createAlarmStore(engine: AlarmEngine, prefs: Preferences) {
+export function createAlarmStore(engine: AlarmEngine, prefs: Preferences, permissionPoll = 750) {
   let state: AppState = {
     ready: false, error: null, alarms: [], ringingIds: [], checkInIds: [], followUpIds: [], mornings: [],
     permissions: { alarm: 'undetermined' }, settings: { ...defaults },
@@ -68,6 +68,32 @@ export function createAlarmStore(engine: AlarmEngine, prefs: Preferences) {
     publish({ checkInIds: [], followUpIds: [], mornings: [], ...native, ready: true, error: null });
   }
 
+  // The OS permission request can fail to return on some devices even after the
+  // user answers. Never hold the edit queue on it: finish as soon as the answer
+  // is visible in the OS state, whichever comes first.
+  async function requestPermission() {
+    let waiting = true;
+    const asked = engine.requestPermission();
+    const answered = (async () => {
+      while (waiting) {
+        await new Promise(resolve => setTimeout(resolve, permissionPoll));
+        if (!waiting) return;
+        const native = await engine.getState().catch(() => null);
+        if (native && native.permissions.alarm !== 'undetermined') return;
+      }
+    })();
+    asked.catch(() => {});
+    try {
+      await Promise.race([asked, answered]);
+    } catch (error) {
+      await enqueue(sync).catch(() => {});
+      throw error;
+    } finally {
+      waiting = false;
+    }
+    await enqueue(sync);
+  }
+
   function mutate(action: () => Promise<void>) {
     return enqueue(async () => {
       try {
@@ -101,7 +127,7 @@ export function createAlarmStore(engine: AlarmEngine, prefs: Preferences) {
       await enqueue(sync);
     },
     checkIn: (id: string) => mutate(async () => { await engine.checkIn?.(id); }),
-    requestPermission: () => mutate(() => engine.requestPermission()),
+    requestPermission,
     openSettings: () => engine.openSettings(),
     updateSettings: (patch: Partial<Settings>) => enqueue(async () => {
       await loadPreferences();

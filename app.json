@@ -55,7 +55,8 @@
       ],
       "./plugins/android",
       "./plugins/android-release",
-      "./plugins/ios-release"
+      "./plugins/ios-release",
+      "./plugins/ios-intents"
     ]
   }
 }

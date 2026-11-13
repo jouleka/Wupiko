@@ -4,8 +4,8 @@ Use a standalone Release build with Metro disconnected. Record the device, OS bu
 
 | Scenario | Procedure and expected observation |
 |---|---|
-| First launch | Complete onboarding, deny access, attempt to enable an alarm. Confirm the app explains how to recover and never confirms a failed schedule. Grant access, return, and save. |
-| Delivery and Stop | Set a named one-time alarm two minutes ahead. Lock the screen. Record the alert, label, audible tone, available actions and stop latency. Reopen the app and confirm the alarm is off. |
+| First launch | On a fresh install, tap “Let’s wake up” and confirm the system alarm prompt appears without another tap. Allow it and set an alarm; it must save and never stay on “Saving…”. Reinstall, choose “Maybe later”, then set an alarm and confirm the prompt appears during save and the alarm is set after Allow. Then deny access, attempt to enable an alarm. Confirm the app explains how to recover and never confirms a failed schedule. Grant access, return, and save. |
+| Delivery and Stop | Set a named one-time alarm two minutes ahead. Lock the screen. Record the alert, label, audible tone, available actions and stop latency. Stopping it must open Wupiko (after unlock) on the wake-up check-in, both from the lock screen and from the Android notification’s Stop action. Confirm the alarm is off afterward. |
 | Background and termination | Repeat with the app behind another app and after closing it normally. On Android test swiping the task away separately from Settings → Force stop. Record vendor-specific behavior. |
 | Reboot | Schedule before reboot. Test delivery before first unlock where supported, then after unlocking, both with and without reopening the app. |
 | Repeat | Set a repeating alarm for today plus another day. Stop it and confirm the next selected day remains scheduled. |

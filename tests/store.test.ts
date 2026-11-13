@@ -22,7 +22,7 @@ function fixture(stored: string | null = null, overrides: Partial<AlarmEngine> =
   const store = createAlarmStore(engine, {
     read: async () => stored,
     write: async value => { stored = value; },
-  });
+  }, 5);
   return { store, rows, engine, persisted: () => stored };
 }
 
@@ -73,6 +73,23 @@ test('Stop reaches the OS immediately while a permission request is open', async
   assert.equal(stopped, alarm.id);
   finish();
   await Promise.all([permission, stop]);
+});
+
+test('a permission request that never returns does not block saving once the OS has an answer', async () => {
+  let alarmPermission: 'undetermined' | 'granted' = 'undetermined';
+  const rows = new Map<string, Alarm>();
+  const { store } = fixture(null, {
+    getState: async () => ({ alarms: [...rows.values()], permissions: { alarm: alarmPermission }, ringingIds: [] }),
+    saveAlarm: async value => { rows.set(value.id, { ...value, nextAt: 98765 }); },
+    requestPermission: () => new Promise(() => {}),
+  });
+  await store.refresh();
+  const permission = store.requestPermission();
+  setTimeout(() => { alarmPermission = 'granted'; }, 20);
+  await permission;
+  assert.equal(store.getSnapshot().permissions.alarm, 'granted');
+  await store.saveAlarm(alarm);
+  assert.equal(store.getSnapshot().alarms[0].nextAt, 98765);
 });
 
 test('returning to the app reflects a one-time alarm already stopped by the system', async () => {
