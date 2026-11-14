@@ -57,7 +57,7 @@ function ActiveAlarm({ id }: { id: string }) {
           </View>
         </View>
         <View style={{ paddingHorizontal: 20, paddingBottom: 12, gap: 10 }}>
-          <Text style={{ textAlign: 'center', color: s.sub, fontWeight: '700', fontSize: 15 }}>{checkIn ? 'Next: boop Wupiko awake, or it rings again.' : nudge ? 'A little nudge from Wupiko.' : 'Wupiko won’t stop until you do!'}</Text>
+          <Text style={{ textAlign: 'center', color: s.sub, fontWeight: '700', fontSize: 15 }}>{checkIn ? 'Next: feed Wupiko some light, or it rings again.' : nudge ? 'A little nudge from Wupiko.' : 'Wupiko won’t stop until you do!'}</Text>
           <Button testID="stop-alarm" title={checkIn ? 'Stop & wake Wupiko' : nudge ? 'Got it!' : 'Stop Alarm'} icon={nudge ? 'check' : 'sun'} tone={{ face: candy.coral, edge: '#C9452A', text: '#FFFFFF' }} disabled={busy} onPress={() => void run(async () => {
             await stopAlarm(id);
             haptic(true);

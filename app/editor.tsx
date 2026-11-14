@@ -141,7 +141,7 @@ function EditForm({ existing }: { existing?: Alarm }) {
         <Mascot mood={kind === 'wake' ? 'sleepy' : 'happy'} size={48} />
         {kind === 'wake' ? <View style={{ flex: 1, gap: 3 }}>
           <Copy size={16} style={{ fontWeight: '800' }}>No snooze. No sneaking back to sleep.</Copy>
-          <Copy size={13} muted style={{ fontWeight: '600' }}>After you stop it, open Wupiko and boop it awake. Skip that and it rings again in 1 minute.</Copy>
+          <Copy size={13} muted style={{ fontWeight: '600' }}>After you stop it, get up and feed Wupiko some light. Skip that and it rings again in 1 minute.</Copy>
         </View> : <View style={{ flex: 1, gap: 3 }}>
           <Copy size={16} style={{ fontWeight: '800' }}>A friendly nudge, nothing more.</Copy>
           <Copy size={13} muted style={{ fontWeight: '600' }}>Stop it and you’re done. No check-in, no repeats, and it never affects your island.</Copy>

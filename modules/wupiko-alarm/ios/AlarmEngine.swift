@@ -86,7 +86,7 @@ actor AlarmEngine {
   }
 
   private func scheduleBackup(_ alarm: StoredAlarm, id: UUID, at date: Date) async throws {
-    try await register(id: id, schedule: .fixed(date), title: "You dozed off! Open Wupiko and boop it awake",
+    try await register(id: id, schedule: .fixed(date), title: "You dozed off! Open Wupiko and wake it up",
                        sound: alarm.sound, opensApp: true)
   }
 

@@ -139,7 +139,7 @@ class RingService : Service() {
                 .setContentText(when {
                     alarm == null -> "Time to wake up."
                     alarm.isNudge -> "A little nudge from Wupiko."
-                    else -> "Then open Wupiko and boop it awake to check in."
+                    else -> "Then open Wupiko and feed it some light to check in."
                 })
                 .setCategory(Notification.CATEGORY_ALARM)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)

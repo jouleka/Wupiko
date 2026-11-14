@@ -127,7 +127,7 @@ class RingActivity : Activity() {
         }
         column.addView(title)
         val hint = TextView(this).apply {
-            text = if (alarm.isNudge) "A little nudge from Wupiko." else "Next: boop Wupiko awake, or it rings again."
+            text = if (alarm.isNudge) "A little nudge from Wupiko." else "Next: feed Wupiko some light, or it rings again."
             gravity = Gravity.CENTER
             textSize = 15f
             setTextColor(ink)
