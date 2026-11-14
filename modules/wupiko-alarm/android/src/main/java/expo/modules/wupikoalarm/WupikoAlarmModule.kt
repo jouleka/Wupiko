@@ -41,6 +41,13 @@ class WupikoAlarmModule : Module() {
             lightMeter.stop()
         }
 
+        AsyncFunction("pingStatus") { TripPings.status(ctx) }
+        // Notification access is granted with alarm access on Android, so there is nothing more to ask for.
+        AsyncFunction("requestPings") { TripPings.status(ctx) == "granted" }
+        AsyncFunction("schedulePing") { id: String, at: Double, title: String, body: String ->
+            TripPings.schedule(ctx, id, at.toLong(), title, body)
+        }
+        AsyncFunction("cancelPings") { ids: List<String> -> TripPings.cancel(ctx, ids) }
         AsyncFunction("lightAvailability") { lightMeter.availability }
         AsyncFunction("requestLightAccess") { lightMeter.availability == "ready" }
         AsyncFunction("startLight") { lightMeter.start() }

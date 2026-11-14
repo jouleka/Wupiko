@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
-import { findById, stageOf, unpackAfter, untilNext } from '../src/finds';
-import { unpack, useTrips } from '../src/trips';
+import { chapterOf, findById, season, stageOf, unpackAfter, untilNext } from '../src/finds';
+import { unpack, usePings, useTrips } from '../src/trips';
 import { Icon, Mascot } from '../src/ui/Art';
 import { Bar, Button, Card, CircleButton, Copy, Heading, Screen, haptic, row, useAction } from '../src/ui/components';
 import { useFeedback } from '../src/ui/Feedback';
@@ -19,6 +19,8 @@ export default function FindScreen() {
   const back = () => router.canGoBack() ? router.back() : router.replace('/');
   const trip = [...trips].sort((a, b) => b.at - a.at)[0];
   const find = trip && findById(trip.find);
+  const chapter = trip && chapterOf(trip);
+  const pings = usePings(trip);
   if (!trip || !find) return <Screen header={<Bar><CircleButton label="Back" icon="back" onPress={back} /></Bar>}>
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
       <Mascot mood="sleepy" size={140} animate />
@@ -37,9 +39,16 @@ export default function FindScreen() {
         show({ title: `You got the ${find.keepsake}!`, description: 'Wupiko put it in your album.', celebrate: true, mood: 'happy' });
       }, 'Couldn’t unpack')} />
       : <Button title={stage === 'collected' || stage === 'gone' ? 'Back to alarms' : 'I’ll stay up with Wupiko'} secondary onPress={back} />}>
-    <Heading kicker={tripDate(trip)}>{stage === 'gone' ? 'Wupiko dozed off…' : 'Wupiko is back!'}</Heading>
+    <Heading kicker={chapter ? `Chapter ${trip.chapter} of ${season.chapters.length} · ${chapter.title}` : tripDate(trip)}>{stage === 'gone' ? 'Wupiko dozed off…' : 'Wupiko is back!'}</Heading>
     <View style={{ gap: 18 }}>
-      <Postcard find={find} />
+      <Postcard find={find} line={chapter?.postcard} />
+      {pings.status === 'undetermined' && (stage === 'postcard' || stage === 'story') && <Card style={[row, { gap: 12 }]}>
+        <Icon name="bell" color={candy.coral} size={22} weight={2.4} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <Copy size={15} style={{ fontWeight: '700' }}>Want a little ping when the story and the keepsake are ready?</Copy>
+          <Button testID="enable-pings" title="Ping me" secondary icon="bell" onPress={() => void pings.enable()} />
+        </View>
+      </Card>}
 
       <Card style={{ gap: 8 }}>
         <View style={[row, { gap: 8 }]}>
@@ -47,7 +56,7 @@ export default function FindScreen() {
           <Text style={{ color: p.ink, fontFamily: display, fontSize: 19 }}>The story</Text>
         </View>
         {storyOpen
-          ? <Copy size={16} style={{ lineHeight: 23 }}>{find.story}</Copy>
+          ? <Copy size={16} style={{ lineHeight: 23 }}>{chapter?.story ?? find.story}</Copy>
           : <Copy muted size={15}>Wupiko is still yawning… story in {countdown(next ?? 0)}</Copy>}
       </Card>
 

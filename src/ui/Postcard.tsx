@@ -21,10 +21,10 @@ export function countdown(ms: number) {
 }
 
 /** The front of the postcard Wupiko sends from its night trip. */
-export function Postcard({ find, height = 200 }: { find: Find; height?: number }) {
+export function Postcard({ find, line = find.postcard, height = 200 }: { find: Find; line?: string; height?: number }) {
   const s = skies[find.phase];
   return <View style={{ borderRadius: 24, borderWidth: 3, borderColor: candy.ink, backgroundColor: '#FFFDF7', padding: 8, transform: [{ rotate: '-1.5deg' }] }}
-    accessible accessibilityLabel={`Postcard from ${find.place}: ${find.postcard}`}>
+    accessible accessibilityLabel={`Postcard from ${find.place}: ${line}`}>
     <Sky phase={find.phase} height={height} radius={16}>
       <View style={{ position: 'absolute', top: 10, right: 10, width: 54, height: 62, backgroundColor: '#FFFDF7', borderRadius: 6, borderWidth: 2, borderColor: candy.ink, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
         <Mascot mood="happy" size={40} />
@@ -34,7 +34,7 @@ export function Postcard({ find, height = 200 }: { find: Find; height?: number }
         <Text style={{ color: s.text, fontFamily: display, fontSize: 24, letterSpacing: -.6 }}>{find.place.replace(/^the /, 'The ')}</Text>
       </View>
     </Sky>
-    <Text style={{ color: candy.ink, fontSize: 16, fontWeight: '700', fontStyle: 'italic', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 }}>“{find.postcard}” — W.</Text>
+    <Text style={{ color: candy.ink, fontSize: 16, fontWeight: '700', fontStyle: 'italic', paddingHorizontal: 8, paddingTop: 10, paddingBottom: 4 }}>“{line}” — W.</Text>
   </View>;
 }
 

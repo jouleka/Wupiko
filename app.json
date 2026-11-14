@@ -2,14 +2,14 @@
   "expo": {
     "name": "Wupiko",
     "slug": "wupiko",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "scheme": "wupiko",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "app.wupiko.alarm",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "deploymentTarget": "26.0",
       "supportsTablet": true,
       "infoPlist": {
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "app.wupiko.alarm",
-      "versionCode": 2,
+      "versionCode": 3,
       "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

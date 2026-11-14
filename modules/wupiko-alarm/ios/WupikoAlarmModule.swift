@@ -55,6 +55,18 @@ public final class WupikoAlarmModule: Module {
       try await AlarmEngine.shared.checkIn(uuid)
     }
 
+    AsyncFunction("pingStatus") { () async -> String in
+      await TripPings.status()
+    }
+    AsyncFunction("requestPings") { () async -> Bool in
+      await TripPings.request()
+    }
+    AsyncFunction("schedulePing") { (id: String, at: Double, title: String, body: String) async throws in
+      try await TripPings.schedule(id: id, at: Date(timeIntervalSince1970: at / 1000), title: title, body: body)
+    }
+    AsyncFunction("cancelPings") { (ids: [String]) in
+      TripPings.cancel(ids: ids)
+    }
     AsyncFunction("lightAvailability") { () -> String in
       LightMeter.availability
     }
