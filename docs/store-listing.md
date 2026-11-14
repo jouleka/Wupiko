@@ -5,44 +5,39 @@ Shared copy for App Store Connect and Google Play. Character limits are noted in
 ## Name
 
 - App Store name [30]: **Wupiko: Wake-Up Alarm**
-- App Store subtitle [30]: **No snooze. Get up for real.**
+- App Store subtitle [30]: **Get up. A story is waiting.**
 - Play title [30]: **Wupiko: Wake-Up Alarm**
+
+## Core idea
+
+Wupiko is a no-snooze alarm that gives you a reason to get up. After the alarm, you feed Wupiko real light (room lights or a window), which gets you out of bed. Then it shares where it traveled last night: a new chapter of a story every morning, and a keepsake you only get if you stay up. Good mornings grow Wupiko's island; nothing is ever taken away.
 
 ## Short description (Play) [80]
 
-A no-snooze alarm with a sunseed buddy who makes sure you actually get up.
+A no-snooze alarm. Get up, feed Wupiko light, and hear tonight's story chapter.
 
 ## Promotional text (App Store) [170]
 
-Stop the alarm, then boop Wupiko awake. Skip it and the alarm comes back at +1, +3 and +6 minutes. Build a streak and grow a morning garden.
+Wupiko wakes up frozen. Turn on the lights to warm it up, then hear where it traveled last night. A new chapter every morning, and a keepsake if you stay up.
 
 ## Keywords (App Store) [100]
 
-alarm,wake up,no snooze,morning,routine,streak,clock,heavy sleeper,get up,mascot
+alarm,wake up,no snooze,morning,story,heavy sleeper,get up,routine,habit,cute,sunlight,clock
+
+## Screenshots (store-assets/ios-1.0.2)
+
+1. No snooze. Just get up. (ringing screen)
+2. Feed Wupiko real light (light check-in)
+3. A new story every morning (chapter + postcard)
+4. Your island grows with you (island)
+5. Collect keepsakes from its travels (album + season)
+6. Wake-ups and gentle reminders (reminder editor)
+
+iPad: story, island, album.
 
 ## Full description [4000]
 
-Meet Wupiko, a tiny sunseed who lives in your phone and really, really wants you up on time.
-
-Wupiko is an alarm clock with one rule: no second chances. There's no snooze button. When your alarm rings, you stop it, then you prove you're awake.
-
-WAKE-UP CHECK
-After you stop an alarm, Wupiko asks for a short wake-up ritual: chase Wupiko around the screen, swipe open the curtains, drag the sun over the hills or pop sleepy bubbles. The ritual changes every day so your half-asleep thumb can't learn it. Go back to sleep instead, and the alarm rings again after 1, 3 and 6 minutes.
-
-BUILD A MORNING STREAK
-Every morning counts as on time, late or missed. Keep your streak going to grow a garden and unlock outfits for Wupiko. Miss a morning and Wupiko will be visibly sad about it.
-
-SIMPLE ALARMS THAT JUST WORK
-• Pick a time, a sound and any repeat days
-• Name your alarms so you know why you're getting up
-• Rings over the lock screen, after a restart and when the app is closed
-• Three custom sounds: Daybreak, Chime and Ripple
-• Light and dark themes with skies that follow the time of day
-
-PRIVATE BY DESIGN
-Wupiko works completely offline. No account, no ads, no tracking, no analytics. Your alarms and streak never leave your phone.
-
-Psst — tap Wupiko. It likes that.
+See the description saved in App Store Connect for 1.0.2 (store-assets/release-1.0.2.md).
 
 ## Categories
 
@@ -58,6 +53,7 @@ Psst — tap Wupiko. It likes that.
 
 - Price: free. No in-app purchases, no ads.
 - Age rating: 4+ / Everyone. No user-generated content, no social features, no web access.
+- Camera: front camera estimates brightness only during the check-in; no images are shown, stored or sent.
 - Data: none collected (App Store "Data Not Collected"; Play Data safety "no data collected or shared").
 
 ## App Review notes (iOS)
