@@ -21,6 +21,8 @@ import kotlin.math.roundToInt
 class RingActivity : Activity() {
     private val listener: () -> Unit = { runOnUiThread { display() } }
     private var showing: String? = null
+    /** A wake-up is on screen: the volume keys do nothing until Wupiko is fed. */
+    private var wakeUp = false
     private fun dp(value: Int) = (resources.displayMetrics.density * value).roundToInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,21 +38,30 @@ class RingActivity : Activity() {
         handleStop(intent)
     }
 
-    // The notification's Stop action lands here so stopping also opens Wupiko.
+    // The notification's action lands here too.
     private fun handleStop(intent: android.content.Intent?) {
         if (intent?.action != AlarmEngine.STOP) return
-        intent.data?.lastPathSegment?.let { stopAndOpen(it) }
+        intent.data?.lastPathSegment?.let { stopOrOpen(it) }
     }
 
-    private fun stopAndOpen(id: String) {
-        val nudge = AlarmEngine.alarms(this).firstOrNull { it.id == id }?.isNudge == true
-        AlarmEngine.stop(this, id)
-        RingService.clearFallback(this, id)
-        // A nudge is done once stopped. A wake-up goes straight to the check-in ritual.
-        if (nudge) return
+    private fun stopOrOpen(id: String) {
+        // A nudge is done once stopped.
+        if (AlarmEngine.alarms(this).firstOrNull { it.id == id }?.isNudge == true) {
+            AlarmEngine.stop(this, id)
+            RingService.clearFallback(this, id)
+            return
+        }
+        // A wake-up keeps ringing: the only way to end it is the check-in inside Wupiko.
         packageManager.getLaunchIntentForPackage(packageName)?.let {
             runCatching { startActivity(it.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                .onSuccess { finishAndRemoveTask() }
         }
+    }
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean = when (event.keyCode) {
+        android.view.KeyEvent.KEYCODE_VOLUME_DOWN, android.view.KeyEvent.KEYCODE_VOLUME_UP,
+        android.view.KeyEvent.KEYCODE_VOLUME_MUTE -> if (wakeUp) true else super.dispatchKeyEvent(event)
+        else -> super.dispatchKeyEvent(event)
     }
 
     override fun onStart() {
@@ -73,6 +84,7 @@ class RingActivity : Activity() {
         }
         if (showing == alarm.id) return
         showing = alarm.id
+        wakeUp = !alarm.isNudge
         val dark = when (appearance(this).getString("theme", "system")) {
             "light" -> false
             "dark" -> true
@@ -127,7 +139,7 @@ class RingActivity : Activity() {
         }
         column.addView(title)
         val hint = TextView(this).apply {
-            text = if (alarm.isNudge) "A little nudge from Wupiko." else "Next: feed Wupiko some light, or it rings again."
+            text = if (alarm.isNudge) "A little nudge from Wupiko." else "Wupiko rings until you feed it some light."
             gravity = Gravity.CENTER
             textSize = 15f
             setTextColor(ink)
@@ -136,7 +148,7 @@ class RingActivity : Activity() {
         }
         column.addView(hint)
         val stop = Button(this).apply {
-            text = if (alarm.isNudge) "Got it!" else "Stop & wake Wupiko"
+            text = if (alarm.isNudge) "Got it!" else "Wake Wupiko"
             isAllCaps = false
             textSize = 22f
             typeface = Typeface.DEFAULT_BOLD
@@ -150,7 +162,7 @@ class RingActivity : Activity() {
                 }, null)
             setOnClickListener {
                 performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-                stopAndOpen(alarm.id)
+                stopOrOpen(alarm.id)
             }
         }
         column.addView(stop, LinearLayout.LayoutParams(-1, -2))

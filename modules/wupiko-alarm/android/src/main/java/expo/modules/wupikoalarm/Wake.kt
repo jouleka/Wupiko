@@ -5,21 +5,24 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Wake-up check rules, kept pure so they can be unit tested. Stopping a ring never
- * ends the wait: only a check-in from the app's ritual does.
+ * Wake-up check rules, kept pure so they can be unit tested. A wake-up rings until
+ * the app's check-in ends it: there is no Stop.
  */
 internal object Wake {
-    /** Minutes after the alarm when Wupiko rings again. */
-    val offsets = listOf(1, 3, 6)
+    /** Minutes a wake-up keeps ringing for a check-in before the morning counts as missed. */
+    const val WINDOW = 30
 
-    fun followUps(occurrence: Long) = offsets.map { occurrence + it * 60_000L }
+    /**
+     * One time per minute of the wait. Each starts the ringing again if it was cut
+     * short (a reboot, a killed process); the last one gives up and ends the wait.
+     */
+    fun followUps(occurrence: Long) = (1..WINDOW).map { occurrence + it * 60_000L }
 
     /** On time if no follow-up has rung yet. */
     fun outcome(nagged: Boolean) = if (nagged) "late" else "onTime"
 
-    /** A wait ends as missed once every follow-up has rung and none is still ringing. */
-    fun exhausted(followUps: List<Long>, ringing: Boolean, now: Long) =
-        !ringing && followUps.none { it > now }
+    /** A wait ends as missed once its last minute has passed. */
+    fun exhausted(followUps: List<Long>, now: Long) = followUps.none { it > now }
 }
 
 internal data class Morning(val alarmId: String, val at: Long, val outcome: String) {

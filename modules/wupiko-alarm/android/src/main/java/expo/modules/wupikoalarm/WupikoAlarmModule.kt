@@ -52,6 +52,9 @@ class WupikoAlarmModule : Module() {
         AsyncFunction("requestLightAccess") { lightMeter.availability == "ready" }
         AsyncFunction("startLight") { lightMeter.start() }
         AsyncFunction("stopLight") { lightMeter.stop() }
+        // RingService keeps a wake-up ringing until the check-in, so the in-app ring iOS needs has nothing to do here.
+        AsyncFunction("startSiren") { _: String -> }
+        AsyncFunction("stopSiren") { }
 
         AsyncFunction("getState") {
             RingService.channel(ctx)

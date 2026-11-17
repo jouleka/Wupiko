@@ -8,8 +8,12 @@ import org.junit.Test
 class WakeTest {
     private val seven = 1_700_000_000_000L
 
-    @Test fun followUpsRingOneThreeAndSixMinutesLater() {
-        assertEquals(listOf(seven + 60_000, seven + 180_000, seven + 360_000), Wake.followUps(seven))
+    @Test fun theWaitIsCheckedEveryMinuteForHalfAnHour() {
+        val times = Wake.followUps(seven)
+        assertEquals(30, times.size)
+        assertEquals(seven + 60_000, times.first())
+        assertEquals(seven + 30 * 60_000, times.last())
+        assertTrue(times.zipWithNext().all { (a, b) -> b - a == 60_000L })
     }
 
     @Test fun checkingInBeforeAFollowUpIsOnTime() {
@@ -17,11 +21,11 @@ class WakeTest {
         assertEquals("late", Wake.outcome(nagged = true))
     }
 
-    @Test fun waitEndsOnlyOnceEveryFollowUpRangAndNothingRings() {
+    @Test fun waitEndsOnceItsLastMinuteHasPassed() {
         val pending = Wake.followUps(seven)
-        assertFalse(Wake.exhausted(pending, ringing = false, now = seven + 30_000))
-        assertFalse("the last follow-up is still ringing", Wake.exhausted(emptyList(), ringing = true, now = seven + 400_000))
-        assertTrue(Wake.exhausted(emptyList(), ringing = false, now = seven + 400_000))
-        assertTrue("follow-ups lost while the phone was off", Wake.exhausted(pending, ringing = false, now = seven + 400_000))
+        assertFalse(Wake.exhausted(pending, now = seven + 30_000))
+        assertFalse("one minute left", Wake.exhausted(pending.takeLast(1), now = seven + 29 * 60_000))
+        assertTrue(Wake.exhausted(emptyList(), now = seven + 400_000))
+        assertTrue("the phone was off for the whole wait", Wake.exhausted(pending, now = seven + 31 * 60_000))
     }
 }

@@ -4,7 +4,7 @@
 
 **One alarm. No second chances.**
 
-An offline alarm clock for iPhone and Android. Choose a time, a sound and optional repeating days. When it rings, press Stop. Wupiko keeps your alarms on your device.
+An offline alarm clock for iPhone and Android. Choose a time, a sound and optional repeating days. A reminder stops when you press Stop. A wake-up keeps ringing until you get up and feed Wupiko some light. Wupiko keeps your alarms on your device.
 
 <p align="center">
   <img src="docs/screenshots/welcome.png" width="245" alt="Meet Wupiko onboarding screen">

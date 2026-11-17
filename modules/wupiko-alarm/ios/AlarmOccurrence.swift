@@ -35,11 +35,14 @@ enum BackupPlan {
     let at: Date
   }
 
-  /// Minutes after the alarm when Wupiko rings again.
-  static let offsets = [1, 3, 6]
+  /// Minutes after the alarm when Wupiko rings again: every minute at first,
+  /// then spreading out over half an hour. iOS caps how many alarms an app may
+  /// hold and can deliver densely packed ones late, so this is not every minute
+  /// throughout. Once Wupiko is open, its own ring fills the gaps.
+  static let offsets = [1, 2, 3, 4, 5, 7, 9, 12, 15, 20, 25, 30]
   /// Upcoming occurrences armed ahead of time. The app tops this up whenever
   /// it runs, so a user who never opens it still gets this many mornings.
-  static let horizon = 3
+  static let horizon = 2
 
   static func upcoming(hour: Int, minute: Int, days: [Int], after now: Date,
                        timeZone: TimeZone = .autoupdatingCurrent) -> [Slot] {

@@ -9,6 +9,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.net.Uri
@@ -17,6 +18,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
@@ -26,6 +28,23 @@ class RingService : Service() {
     private var current: String? = null
     private val main = Handler(Looper.getMainLooper())
     private val stateChanged: () -> Unit = { main.post { if (current != null) refresh() }; Unit }
+    // A wake-up is loud whatever the phone's alarm volume is set to. The previous level comes back afterwards.
+    private var volumeBefore: Int? = null
+    private var startedAt = 0L
+    private val loud = object : Runnable {
+        override fun run() {
+            val audio = getSystemService(AudioManager::class.java)
+            val max = audio.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            // Do Not Disturb can refuse the change. The alarm still plays at the level it allows.
+            if (audio.getStreamVolume(AudioManager.STREAM_ALARM) < max) {
+                runCatching { audio.setStreamVolume(AudioManager.STREAM_ALARM, max, 0) }
+            }
+            // Swell over the first seconds instead of starting at full blast.
+            val gain = (RAMP_FROM + (1 - RAMP_FROM) * (SystemClock.elapsedRealtime() - startedAt) / RAMP_MS).coerceAtMost(1f)
+            runCatching { player?.setVolume(gain, gain) }
+            main.postDelayed(this, 500)
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onCreate() {
@@ -78,6 +97,11 @@ class RingService : Service() {
                 VibrationEffect.createWaveform(longArrayOf(0, 350, 180, 350, 1300), 0), attributes
             )
         }
+        if (!alarm.isNudge) {
+            volumeBefore = getSystemService(AudioManager::class.java).getStreamVolume(AudioManager.STREAM_ALARM)
+            startedAt = SystemClock.elapsedRealtime()
+            main.post(loud)
+        }
     }
 
     private fun play(uri: Uri, attributes: AudioAttributes) {
@@ -98,6 +122,9 @@ class RingService : Service() {
     }
 
     private fun quiet() {
+        main.removeCallbacks(loud)
+        volumeBefore?.let { runCatching { getSystemService(AudioManager::class.java).setStreamVolume(AudioManager.STREAM_ALARM, it, 0) } }
+        volumeBefore = null
         player?.release()
         player = null
         getSystemService(Vibrator::class.java).cancel()
@@ -114,12 +141,14 @@ class RingService : Service() {
     companion object {
         const val CHANNEL = "wupiko_alarms"
         private const val NOTICE = 8201
+        private const val RAMP_FROM = .35f
+        private const val RAMP_MS = 8_000f
         private const val PI_FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
         fun channel(ctx: Context) {
             val manager = ctx.getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(NotificationChannel(CHANNEL, "Ringing alarms", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Show an alarm and its Stop Alarm action"
+                description = "Show a ringing alarm and how to end it"
                 // The service plays the user's per-alarm selection on the alarm audio stream.
                 setSound(null, null)
                 enableVibration(false)
@@ -139,7 +168,7 @@ class RingService : Service() {
                 .setContentText(when {
                     alarm == null -> "Time to wake up."
                     alarm.isNudge -> "A little nudge from Wupiko."
-                    else -> "Then open Wupiko and feed it some light to check in."
+                    else -> "It rings until you open Wupiko and feed it some light."
                 })
                 .setCategory(Notification.CATEGORY_ALARM)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
@@ -151,13 +180,13 @@ class RingService : Service() {
                     .toBundle() else null
                 val open = PendingIntent.getActivity(ctx, 0, Intent(ctx, RingActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP), PI_FLAGS, options)
-                // Stopping from the notification also opens Wupiko for the check-in.
+                // A reminder stops from the notification. A wake-up opens Wupiko for the check-in, still ringing.
                 val stop = PendingIntent.getActivity(ctx, 1, Intent(ctx, RingActivity::class.java)
                     .setAction(AlarmEngine.STOP).setData(Uri.parse("wupiko-native://stop/${alarm.id}"))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP), PI_FLAGS, options)
                 // On 14+, the system substitutes a heads-up presentation when special access is off.
                 builder.setFullScreenIntent(open, true).setContentIntent(open)
-                    .addAction(Notification.Action.Builder(null, "Stop Alarm", stop).build())
+                    .addAction(Notification.Action.Builder(null, if (alarm.isNudge) "Stop Alarm" else "Wake Wupiko", stop).build())
             }
             return builder.build()
         }

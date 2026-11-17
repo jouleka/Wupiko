@@ -79,12 +79,19 @@ public final class WupikoAlarmModule: Module {
     AsyncFunction("stopLight") {
       self.lightMeter.stop()
     }
+    AsyncFunction("startSiren") { (sound: String) throws in
+      try Siren.shared.start(sound: sound)
+    }.runOnQueue(.main)
+    AsyncFunction("stopSiren") {
+      Siren.shared.stop()
+    }.runOnQueue(.main)
 
     OnStartObserving("onAlarmChange") { self.observe() }
     OnStopObserving("onAlarmChange") { self.stopObserving() }
     OnDestroy {
       self.stopObserving()
       self.lightMeter.stop()
+      DispatchQueue.main.async { Siren.shared.stop() }
     }
   }
 

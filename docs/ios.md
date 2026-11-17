@@ -12,19 +12,27 @@ The three original PCM WAV files are copied into the main app bundle by CocoaPod
 
 ## Wake-up check
 
-Wupiko has no snooze, and the wake-up check is part of every alarm, with no setting to turn it off. iOS lets anyone end an AlarmKit alert from the system UI or the side button, and the app is usually not running at that moment, so Wupiko arms the consequence in advance instead of reacting to dismissal. For each enabled alarm the engine registers one-off `fixed` AlarmKit follow-ups at +1, +3 and +6 minutes for the next three occurrences (one for a one-time alarm). Stopping an alert never cancels them. Only `checkIn`, called from the in-app boop ritual, cancels the follow-ups for occurrences that already rang. The short first gap leaves time to open the app and boop Wupiko, but no time to nap.
+Wupiko has no snooze, and the wake-up check is part of every alarm, with no setting to turn it off. iOS lets anyone end an AlarmKit alert from the system UI or the side button, and the app is usually not running at that moment, so Wupiko arms the consequence in advance instead of reacting to dismissal. For each enabled wake-up the engine registers one-off `fixed` AlarmKit follow-ups at +1, +2, +3, +4, +5, +7, +9, +12, +15, +20, +25 and +30 minutes for the next two occurrences (one for a one-time alarm). Stopping an alert never cancels them. Only `checkIn`, called when the in-app check-in finishes, cancels the follow-ups for occurrences that already rang. iOS caps how many alarms an app may hold (the number is not published) and can deliver densely packed ones late, which is why the follow-ups thin out instead of ringing every minute; scheduling them is best effort, earliest first, and `state()` retries the rest.
 
-Because the system alert is all a half-asleep user sees, its title carries the instruction ("… · Then open Wupiko to check in"), and follow-ups say "You dozed off! Open Wupiko and boop it awake". In the app, Stop reads "Stop & wake Wupiko" and leads straight to the check-in screen, which shows a live countdown to the next ring.
+Because the system alert is all a half-asleep user sees, its title carries the instruction ("… · Then open Wupiko to check in"), and follow-ups say "You dozed off! Open Wupiko and wake it up".
+
+## Ringing until fed
+
+Once Wupiko is open, the app rings itself (`Siren.swift`) and the system alert is no longer the only sound. While a wake-up is waiting for its check-in, the check-in screen silences any system alert for it and plays the alarm's sound on a `.playback` audio session, which ignores the silent switch. It swells to full over eight seconds, holds the output volume at maximum through the system volume slider (`MPVolumeView`; iOS has no direct call), and restores the previous volume afterwards. The `audio` background mode keeps it playing when the phone is locked or Wupiko is sent to the background. Only finishing the check-in, or the wait running out, ends it. Force-quitting the app stops this ring, and the AlarmKit follow-ups carry on.
+
+A wake-up that is waiting for its check-in cannot be edited, switched off or deleted: the check-in screen covers the app, and the engine refuses with `checkInFirst`.
+
+This path needs a real phone to verify: the silent switch, the volume hold, locking mid-ring, and the hand-over when a follow-up alert arrives while the siren is playing.
 
 Every `state()` call tops up the horizon, drops follow-ups that fired, and replaces future follow-ups whose time no longer matches the schedule after edits or time-zone changes. Follow-up IDs are part of the record's owned IDs, so unowned-registration cleanup leaves them alone. `state()` reports `checkInIds` (an occurrence has rung and its follow-ups are still registered) and each alarm's `nagAt`.
 
-A determined user can still turn the alarm off in the app or delete it. The check targets the half-asleep reflex, not intent.
+A determined user can still force-quit Wupiko and hush each follow-up, power the phone off, or delete the app. iOS gives no way around that.
 
 ## Wake-up rituals and streak
 
 Checking in means finishing a short ritual, picked per alarm per day from four: chase Wupiko as it rolls around, swipe open the curtains, drag the sun over the hills, or pop sleepy bubbles. The choice is stable within a day and changes the next, so a half-asleep thumb can't learn one fixed motion. With VoiceOver on, the chase ritual is used because its targets are plain buttons. Finishing it checks in automatically.
 
-The engine keeps an append-only morning log (`wupiko-mornings-v1.json`, latest 500 entries). A check-in before any follow-up rang is `onTime`, after one is `late`. An occurrence whose follow-ups all fired, or that was edited, switched off or deleted while still waiting, is `missed`. The first outcome for an occurrence wins. `state()` returns the log as `mornings` and `followUpIds` for alarms currently ringing because of a follow-up.
+The engine keeps an append-only morning log (`wupiko-mornings-v1.json`, latest 500 entries). A check-in before any follow-up rang is `onTime`, after one is `late`. An occurrence whose follow-ups all fired without a check-in is `missed`. The first outcome for an occurrence wins. `state()` returns the log as `mornings` and `followUpIds` for alarms currently ringing because of a follow-up.
 
 The app turns the log into a streak (`src/streak.ts`): consecutive alarm days without a miss, where a day is only as good as its worst alarm and days without alarms don't count. On-time mornings plant flowers in the home sky's garden, late ones buds, misses a wilted stem. Streaks of 3, 7, 14 and 30 unlock outfits for Wupiko (sprout, flower crown, sunnies, golden crown), which are kept forever and chosen in Settings. After a miss, Wupiko is sad for a day.
 

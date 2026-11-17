@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { kindOf } from '../kind';
+import { kindOf, stoppable } from '../kind';
 import { useWupiko } from '../store';
 import { Sky } from './Art';
 import { Mascot } from './Mascot';
@@ -71,7 +71,8 @@ function ActiveAlarm({ id }: { id: string }) {
 }
 
 export function Ringing() {
-  const { ringingIds } = useWupiko();
-  const id = ringingIds[0];
+  const { ringingIds, checkInIds } = useWupiko();
+  // Wake-ups waiting for a check-in have no Stop: they ring through the check-in screen.
+  const id = stoppable(ringingIds, checkInIds)[0];
   return id ? <ActiveAlarm key={id} id={id} /> : null;
 }

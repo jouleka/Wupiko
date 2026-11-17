@@ -30,6 +30,9 @@ class AlarmDelivery : BroadcastReceiver() {
                         Log.e("Wupiko", "System declined foreground ringing service", e)
                         RingService.postFallback(context, id)
                     }
+                } else {
+                    // The wait ran out, or the alarm is gone: nothing should be left on screen.
+                    RingService.clearFallback(context, id)
                 }
             }
             AlarmEngine.STOP -> {

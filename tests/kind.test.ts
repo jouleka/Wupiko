@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { kindOf, suggestKind } from '../src/kind';
+import { kindOf, stoppable, suggestKind } from '../src/kind';
 
 test('early hours suggest a wake-up and the rest of the day a nudge', () => {
   assert.equal(suggestKind(6, ''), 'wake');
@@ -27,4 +27,10 @@ test('names about getting up suggest a wake-up at any hour', () => {
 test('alarms saved before kinds existed are wake-ups', () => {
   assert.equal(kindOf({}), 'wake');
   assert.equal(kindOf({ kind: 'nudge' }), 'nudge');
+});
+
+test('only alarms that are not waiting for a check-in can be stopped', () => {
+  assert.deepEqual(stoppable(['wake', 'lunch'], ['wake']), ['lunch']);
+  assert.deepEqual(stoppable(['wake'], ['wake']), []);
+  assert.deepEqual(stoppable(['lunch']), ['lunch']);
 });

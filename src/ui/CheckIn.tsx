@@ -5,7 +5,9 @@ import { useWupiko } from '../store';
 import { dayKey, goodMornings, newPieces, wornOutfit } from '../island';
 import { Icon, Sky } from './Art';
 import { router } from 'expo-router';
+import { stoppable } from '../kind';
 import { useLightAvailability } from '../light';
+import { useSiren } from '../siren';
 import { beginTodaysTrip } from '../trips';
 import { FeedingStage, LightAsk } from './Feeding';
 import { RitualStage, hash, ritualCopy, ritualOrder, type Ritual } from './Rituals';
@@ -13,12 +15,6 @@ import { row, useAction } from './components';
 import { useFeedback } from './Feedback';
 import { candy, display, skies } from './theme';
 import { greeting } from './time';
-
-function timeLeft(at: number | null | undefined, now: number) {
-  if (!at) return null;
-  const s = Math.max(0, Math.round((at - now) / 1000));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
-}
 
 function useScreenReader() {
   const [on, setOn] = useState(false);
@@ -32,10 +28,9 @@ function useScreenReader() {
 
 /** The wake-up check: a short, different ritual each morning. Finishing it checks in. */
 function WakeUp({ id }: { id: string }) {
-  const { alarms, checkIn, mornings, settings, getSnapshot } = useWupiko();
+  const { alarms, checkIn, mornings, settings, getSnapshot, ringingIds, stopAlarm } = useWupiko();
   const alarm = alarms.find((item) => item.id === id);
   const [progress, setProgress] = useState(0);
-  const [now, setNow] = useState(() => Date.now());
   const [stage, setStage] = useState({ width: 0, height: 0 });
   const { run } = useAction();
   const show = useFeedback();
@@ -54,10 +49,15 @@ function WakeUp({ id }: { id: string }) {
     : light.availability === 'undetermined' ? 'ask' : light.availability == null ? 'loading' : 'ritual';
   const done = progress >= 1;
   const outfit = wornOutfit(settings.outfit, before);
+  // The ring only ends when the check-in does. On iPhone the system alert can be
+  // hushed, so Wupiko silences it and rings itself instead; on Android the alarm
+  // is still ringing and Stop does nothing to a wake-up.
+  const ringing = ringingIds.includes(id);
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+    if (ringing) void stopAlarm(id).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ringing, id]);
+  useSiren(!done, alarm?.sound ?? settings.sound);
   useEffect(() => {
     if (!done) return;
     const timer = setTimeout(() => void run(async () => {
@@ -84,7 +84,6 @@ function WakeUp({ id }: { id: string }) {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
-  const left = timeLeft(alarm?.nagAt, now);
   const s = skies[done ? 'day' : 'dawn'];
   const copy = mode === 'light' ? { title: 'Wupiko is frozen!', hint: 'Turn on the room lights or face a window for a few seconds.' }
     : mode === 'ask' ? { title: 'Wupiko runs on sunshine', hint: 'One quick thing before breakfast.' }
@@ -94,9 +93,9 @@ function WakeUp({ id }: { id: string }) {
       <View style={{ position: 'absolute', left: 0, right: 0, top: 0 }}><Sky phase={done ? 'day' : 'dawn'} height={screen} radius={0} /></View>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: 24, paddingTop: 18, gap: 8, alignItems: 'center' }}>
-          {left && !done && <View style={[row, { gap: 6, backgroundColor: candy.ink, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 99 }]}>
+          {!done && <View style={[row, { gap: 6, backgroundColor: candy.ink, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 99 }]}>
             <Icon name="bell" color={candy.sun} size={16} weight={2.6} />
-            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16, fontVariant: ['tabular-nums'] }}>Rings again in {left}</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 16 }}>Ringing until Wupiko is fed</Text>
           </View>}
           <Text accessibilityRole="header" style={{ fontFamily: display, color: s.text, fontSize: 32, letterSpacing: -1, textAlign: 'center' }}>{done ? 'You’re both up!' : copy.title}</Text>
           <Text style={{ color: s.sub, fontSize: 17, fontWeight: '600', textAlign: 'center' }}>{done ? 'Checking in…' : copy.hint}</Text>
@@ -123,6 +122,6 @@ function WakeUp({ id }: { id: string }) {
 export function CheckIn() {
   const { checkInIds, ringingIds } = useWupiko();
   const id = checkInIds?.[0];
-  // Ringing takes over first; the check-in follows once the sound stops.
-  return id && !ringingIds.length ? <WakeUp key={id} id={id} /> : null;
+  // A reminder that is ringing shows its Stop screen first. A wake-up rings right through this one.
+  return id && !stoppable(ringingIds, checkInIds).length ? <WakeUp key={id} id={id} /> : null;
 }

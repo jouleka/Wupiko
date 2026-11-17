@@ -15,5 +15,12 @@ export function suggestKind(hour: number, label: string): AlarmKind {
   return hour >= 4 && hour < 11 ? 'wake' : 'nudge';
 }
 
+/**
+ * Ringing alarms that Stop can end. A wake-up waiting for its check-in is not
+ * one of them: it rings until Wupiko is fed, so it goes straight to the check-in.
+ */
+export const stoppable = (ringingIds: string[], checkInIds: string[] = []) =>
+  ringingIds.filter((id) => !checkInIds.includes(id));
+
 /** Alarms saved before kinds existed are wake-ups. */
 export const kindOf = (alarm: { kind?: AlarmKind }): AlarmKind => alarm.kind ?? 'wake';

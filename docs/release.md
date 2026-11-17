@@ -41,7 +41,7 @@ Open `ios/Wupiko.xcworkspace`, select the Wupiko target, choose your team under 
 
 Release builds run a `[Wupiko] Strip framework symbols` phase (from `plugins/ios-release.js`). It strips debug and local symbols from the prebuilt React Native, Hermes and Expo frameworks, just as Xcode already strips the app binary. This cuts the installed app from about 37 MB to 25 MB, and exported symbols and runtime behavior stay the same. If the phase is missing after `npx expo prebuild --clean`, run `pod install` again.
 
-App Store Connect needs the privacy policy URL, a "Data Not Collected" privacy label, and screenshots. `supportsTablet` is `true`, so iPad screenshots are required too. In the review notes, explain that alarms deliberately ring again at +1, +3 and +6 minutes until the in-app wake-up ritual is finished, and that this is the app's core feature.
+App Store Connect needs the privacy policy URL, a "Data Not Collected" privacy label, and screenshots. `supportsTablet` is `true`, so iPad screenshots are required too. In the review notes, explain that wake-up alarms deliberately keep ringing (system follow-ups for up to 30 minutes, plus the app's own ring while it is open, which uses the `audio` background mode) until the in-app check-in is finished, and that this is the app's core feature.
 
 ## Before submitting
 

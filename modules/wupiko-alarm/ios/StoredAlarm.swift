@@ -5,6 +5,7 @@ enum AlarmInputError: LocalizedError {
   case permissionRequired
   case missingSound
   case recurrenceUnavailable
+  case checkInFirst
 
   var errorDescription: String? {
     switch self {
@@ -12,6 +13,7 @@ enum AlarmInputError: LocalizedError {
     case .permissionRequired: return "Allow alarms in Settings to turn on this alarm."
     case .missingSound: return "This alarm sound is missing from the installed app."
     case .recurrenceUnavailable: return "The next alarm time could not be calculated."
+    case .checkInFirst: return "Feed Wupiko some light first, then change this alarm."
     }
   }
 }

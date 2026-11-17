@@ -192,7 +192,9 @@ actor AlarmEngine {
     }
     for slot in wanted where !backups.contains(where: { matches($0, slot) }) {
       let id = UUID()
-      try await scheduleBackup(record, id: id, at: slot.at)
+      // iOS limits how many alarms an app may hold. The earliest follow-ups matter
+      // most, so keep what fits and let the next state() try the rest again.
+      do { try await scheduleBackup(record, id: id, at: slot.at) } catch { break }
       backups.append(BackupAlarm(id: id, occurrence: slot.occurrence, at: slot.at))
     }
     record.backups = backups
@@ -206,13 +208,14 @@ actor AlarmEngine {
     let authorized = permission == "granted"
     if record.systemID != nil && !authorized { throw AlarmInputError.permissionRequired }
     let system = authorized ? try manager.alarms : []
+    let previous = records.first { $0.id == record.id }?.backups ?? []
+    let live = Set(system.map(\.id))
+    // Editing or switching off an alarm that is still waiting for a check-in is not a way out.
+    if previous.contains(where: { $0.occurrence <= Date() && live.contains($0.id) }) { throw AlarmInputError.checkInFirst }
     // Remove any uncommitted schedule from a prior interrupted transaction.
     if authorized { try cancelUnowned(system, records: records) }
     if let id = record.systemID { try await schedule(record, id: id) }
     let old = records.first { $0.id == record.id }?.systemID
-    let previous = records.first { $0.id == record.id }?.backups ?? []
-    let live = Set(system.map(\.id))
-    let escaped = Set(previous.filter { $0.occurrence <= Date() && live.contains($0.id) }.map(\.occurrence))
     if let i = records.firstIndex(where: { $0.id == record.id }) { records[i] = record }
     else { records.append(record) }
     do {
@@ -224,8 +227,6 @@ actor AlarmEngine {
     if let old, system.contains(where: { $0.id == old }) { try manager.cancel(id: old) }
     // The next state() arms follow-ups for the edited schedule.
     for backup in previous where system.contains(where: { $0.id == backup.id }) { try manager.cancel(id: backup.id) }
-    // Editing or switching off an alarm that is still waiting for a check-in is not a way out.
-    try mornings.record(escaped.sorted().map { Morning(alarm: record.id, occurrence: $0, outcome: .missed) })
   }
 
   func delete(_ id: UUID) async throws {
@@ -233,13 +234,13 @@ actor AlarmEngine {
     defer { leave() }
     var records = try catalog.load()
     let pending = records.first { $0.id == id }?.backups ?? []
+    if permission == "granted" {
+      // Deleting an alarm that is still waiting for a check-in is not a way out either.
+      let live = Set(try manager.alarms.map(\.id))
+      if pending.contains(where: { $0.occurrence <= Date() && live.contains($0.id) }) { throw AlarmInputError.checkInFirst }
+    }
     records.removeAll { $0.id == id }
     try catalog.write(records)
-    if permission == "granted" {
-      let live = Set(try manager.alarms.map(\.id))
-      let escaped = Set(pending.filter { $0.occurrence <= Date() && live.contains($0.id) }.map(\.occurrence))
-      try mornings.record(escaped.sorted().map { Morning(alarm: id, occurrence: $0, outcome: .missed) })
-    }
     if permission == "granted" { try cancelUnowned(manager.alarms, records: records) }
   }
 

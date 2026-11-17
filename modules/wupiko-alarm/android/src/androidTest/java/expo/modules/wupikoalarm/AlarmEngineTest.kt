@@ -19,6 +19,7 @@ class AlarmEngineTest {
     private val id = UUID.randomUUID().toString()
     private val time = ZonedDateTime.now().plusHours(1)
     private val draft = Alarm(id, time.hour, time.minute, emptyList(), "Wake", "daybreak", true, false, null)
+    private val nudge = draft.copy(label = "Lunch", kind = "nudge")
     private fun saved() = AlarmEngine.alarms(ctx).single { it.id == id }
 
     @Before fun allowNotifications() {
@@ -29,6 +30,8 @@ class AlarmEngineTest {
     }
 
     @After fun cleanUp() {
+        // A wake-up that is still waiting cannot be deleted.
+        AlarmEngine.checkIn(ctx, id)
         AlarmEngine.delete(ctx, id)
     }
 
@@ -50,7 +53,7 @@ class AlarmEngineTest {
     }
 
     @Test fun stopConsumesOneTimeAndPreservesWeeklyOccurrence() {
-        AlarmEngine.save(ctx, draft.copy(enabled = true))
+        AlarmEngine.save(ctx, nudge.copy(enabled = true))
         val oneTime = requireNotNull(saved().nextAt)
         val detachedObserver: () -> Unit = { error("React context closed") }
         AlarmEngine.listeners.add(detachedObserver)
@@ -64,7 +67,7 @@ class AlarmEngineTest {
         AlarmEngine.stop(ctx, id)
         assertFalse(saved().ringing)
         assertFalse(AlarmEngine.fire(ctx, id, oneTime))
-        AlarmEngine.save(ctx, draft.copy(enabled = true, days = listOf(time.dayOfWeek.value)))
+        AlarmEngine.save(ctx, nudge.copy(enabled = true, days = listOf(time.dayOfWeek.value)))
         val first = requireNotNull(saved().nextAt)
         assertTrue(AlarmEngine.fire(ctx, id, first))
         val next = requireNotNull(saved().nextAt)
@@ -76,19 +79,36 @@ class AlarmEngineTest {
         assertFalse(AlarmEngine.fire(ctx, id, first))
     }
 
-    @Test fun stoppingKeepsWaitingUntilCheckIn() {
+    @Test fun aWakeUpRingsUntilCheckIn() {
         AlarmEngine.save(ctx, draft.copy(enabled = true))
         val time = requireNotNull(saved().nextAt)
         assertTrue(AlarmEngine.fire(ctx, id, time))
         assertEquals(Wake.followUps(time), saved().followUps)
         AlarmEngine.stop(ctx, id)
+        assertTrue("Stop does not silence a wake-up", saved().ringing)
+        assertThrows(IllegalStateException::class.java) { AlarmEngine.save(ctx, saved().copy(enabled = false)) }
+        assertThrows(IllegalStateException::class.java) { AlarmEngine.delete(ctx, id) }
         assertEquals(time, saved().waitingSince)
         assertTrue(AlarmEngine.fireFollowUp(ctx, id, time + 60_000))
-        assertTrue(saved().ringing && saved().followUp && saved().nagged)
-        AlarmEngine.stop(ctx, id)
+        assertTrue(saved().ringing && saved().nagged)
+        assertFalse("it never stopped, so this is not round two", saved().followUp)
         AlarmEngine.checkIn(ctx, id)
+        assertFalse(saved().ringing)
         assertNull(saved().waitingSince)
-        assertFalse(AlarmEngine.fireFollowUp(ctx, id, time + 180_000))
+        assertFalse(AlarmEngine.fireFollowUp(ctx, id, time + 120_000))
         assertEquals("late", MorningLog.load(ctx).last { it.alarmId == id && it.at == time }.outcome)
+    }
+
+    @Test fun anUnansweredWakeUpGivesUpAfterTheWait() {
+        AlarmEngine.save(ctx, draft.copy(enabled = true))
+        val time = requireNotNull(saved().nextAt)
+        assertTrue(AlarmEngine.fire(ctx, id, time))
+        val times = Wake.followUps(time)
+        times.dropLast(1).forEach { assertTrue(AlarmEngine.fireFollowUp(ctx, id, it)) }
+        assertTrue(saved().ringing)
+        assertFalse(AlarmEngine.fireFollowUp(ctx, id, times.last()))
+        assertFalse(saved().ringing)
+        assertNull(saved().waitingSince)
+        assertEquals("missed", MorningLog.load(ctx).last { it.alarmId == id && it.at == time }.outcome)
     }
 }
