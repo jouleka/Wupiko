@@ -1,0 +1,178 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Wupiko promo</title>
+<style>
+@font-face{font-family:Bricolage;src:url('../../assets/fonts/BricolageDisplay.ttf');font-weight:200 900}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#1D1830}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:Bricolage,-apple-system,"Helvetica Neue",sans-serif}
+.abs{position:absolute;left:0;top:0}
+#base,#dawn{width:1080px;height:1920px}
+#dawn{background:linear-gradient(180deg,#FFB98A 0%,#FFE3A8 100%)}
+.star{position:absolute;border-radius:50%;background:#FFF8EC}
+.h{position:absolute;left:60px;top:250px;width:880px;text-align:center;font-weight:760;font-size:92px;line-height:1.04;letter-spacing:-1px}
+.h.s{font-size:84px}
+#clock{left:60px;top:610px;width:880px;text-align:center;font-weight:760;font-size:200px;line-height:1;color:#FFF8EC;letter-spacing:-4px}
+#clock small{font-size:64px;letter-spacing:0;margin-left:14px;opacity:.7}
+.z{position:absolute;font-weight:800;color:#B8A9FF}
+#mas{width:520px;height:520px;transform-origin:50% 60%}
+#mas img{position:absolute;left:0;top:0;width:100%;height:100%}
+.ring{position:absolute;border-radius:50%;border:9px solid #fff}
+.pill{position:absolute;left:0;width:1000px;top:640px;display:flex;justify-content:center}
+.pill span{display:block;padding:0 52px;height:96px;line-height:96px;border-radius:48px;font-size:56px;font-weight:760;font-family:-apple-system,"SF Pro Rounded","Helvetica Neue",sans-serif;font-weight:800;position:absolute;white-space:nowrap}
+#pdark{background:#5B6B8C;color:#E3F4FF;box-shadow:0 8px 0 #3E4B69}
+#pbright{background:#FFC83D;color:#2E2340;box-shadow:0 8px 0 #E79A12}
+#bar{left:200px;width:600px;top:1370px}
+#bar .lab{font-family:-apple-system,"Helvetica Neue",sans-serif;font-weight:700;font-size:38px;text-align:center;margin-bottom:14px;color:#2E2340}
+#bar .trk{height:46px;border-radius:23px;background:rgba(46,35,64,.16);border:4px solid rgba(46,35,64,.55);overflow:hidden}
+#bar .fill{height:100%;background:linear-gradient(90deg,#FFC83D,#FF6B4A);border-radius:23px}
+.spark{position:absolute;border-radius:50%;background:#FFC83D}
+#phone{left:56px;top:0;width:868px;height:1848px;border-radius:112px;overflow:hidden;box-shadow:0 30px 80px rgba(46,35,64,.35)}
+#phone::after{content:"";position:absolute;left:0;top:0;right:0;bottom:0;border:10px solid #2E2340;border-radius:112px}
+#phone img{position:absolute;width:1056px;height:2294px;left:-95px;top:-446px}
+#end{left:0;top:0;width:1080px;height:1920px}
+#wm{position:absolute;left:230px;top:900px;width:540px}
+#tag{position:absolute;left:60px;width:880px;top:1100px;text-align:center;font-size:66px;font-weight:760;color:#2E2340}
+#app{position:absolute;left:0;width:1000px;top:1260px;display:flex;justify-content:center}
+#app span{background:#2E2340;color:#FFF8EC;font-family:-apple-system,"Helvetica Neue",sans-serif;font-weight:700;font-size:48px;padding:0 54px;height:100px;line-height:100px;border-radius:50px}
+</style></head><body>
+<div id="stage">
+ <div id="base" class="abs"></div>
+ <div id="dawn" class="abs"></div>
+ <div id="stars" class="abs"></div>
+ <div id="glow" class="abs" style="width:1000px;height:1000px;border-radius:50%;background:radial-gradient(circle,rgba(255,243,196,.95),rgba(255,243,196,0) 68%)"></div>
+ <div id="ice" class="abs" style="width:760px;height:760px;border-radius:50%;background:radial-gradient(circle,rgba(110,198,255,.55),rgba(110,198,255,0) 68%)"></div>
+ <div id="rings" class="abs"></div>
+ <div id="clock" class="abs">6:30<small>AM</small></div>
+ <div id="zs" class="abs"></div>
+ <div id="sparks" class="abs"></div>
+ <div id="mas" class="abs">
+  <img id="m_sleepy" src="../../assets/brand/wupiko-sleepy.svg">
+  <img id="m_ringing" src="../../assets/brand/wupiko-ringing.svg">
+  <img id="m_awake" src="../../assets/brand/wupiko-awake.svg">
+  <img id="m_cold" src="../../assets/brand/wupiko-ringing.svg" style="filter:hue-rotate(165deg) saturate(.7) brightness(.88)">
+  <img id="m_happy" src="../../assets/brand/wupiko-happy.svg">
+ </div>
+ <div class="pill abs" id="pillw"><span id="pdark">Too dark</span><span id="pbright">Bright!</span></div>
+ <div id="bar" class="abs"><div class="lab">Warmth</div><div class="trk"><div class="fill" id="fill"></div></div></div>
+ <div id="phone" class="abs"><img src="../../store-assets/ios-1.0.2/iphone-3-story.jpg"></div>
+ <div id="end" class="abs">
+  <img id="wm" src="../../assets/brand/wordmark.svg">
+  <div id="tag">The alarm you can't snooze</div>
+  <div id="app"><span>Free on the App Store</span></div>
+ </div>
+ <div class="h" id="h1">You always hit snooze.</div>
+ <div class="h" id="h2">Wupiko has no snooze.</div>
+ <div class="h s" id="h3">It only stops when you get up and turn on the lights.</div>
+ <div class="h" id="h4">Then a new story is waiting.</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const io=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const out=x=>1-Math.pow(1-x,3);
+const back=x=>{const c=1.70158,d=c+1;return 1+d*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const lerp=(a,b,k)=>a+(b-a)*k;
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mix=(a,b,k)=>{const A=hex(a),B=hex(b);return `rgb(${A.map((v,i)=>Math.round(lerp(v,B[i],k))).join(',')})`};
+// stars
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const stars=[];for(let i=0;i<34;i++){const e=document.createElement('div');e.className='star';const s=5+rnd()*7;e.style.width=e.style.height=s+'px';const x=rnd()*1040+20,y=rnd()*1500+20;e.style.left=x+'px';e.style.top=y+'px';$('stars').appendChild(e);stars.push({e,ph:rnd()*6.28,sp:.5+rnd()*.8})}
+// rings, zs, sparks
+const rings=[0,1,2,3].map(()=>{const e=document.createElement('div');e.className='ring';$('rings').appendChild(e);return e});
+const zs=[0,1,2].map(()=>{const e=document.createElement('div');e.className='z';e.textContent='z';$('zs').appendChild(e);return e});
+const sparks=[];for(let i=0;i<10;i++){const e=document.createElement('div');e.className='spark';$('sparks').appendChild(e);sparks.push(e)}
+const HEAD=[[ 'h1',-1,2.5],['h2',2.5,5.0],['h3',5.0,9.5],['h4',9.5,12.5]];
+function renderAt(t){
+  // brightness
+  const b=io(prog(t,6.2,7.2));
+  // base color
+  let a=prog(t,2.5,2.8)*(1-prog(t,4.7,5.4));
+  let base=mix('#1D1830','#8A3A4A',a*(.4+.3*Math.sin(2*Math.PI*1.2*t)));
+  base=mix('#1D1830',base.startsWith('rgb')?'#1D1830':'#1D1830',0); // no-op keep type
+  const flash=a*(.4+.3*Math.sin(2*Math.PI*1.2*t));
+  const warm=[0x1D,0x18,0x30].map((v,i)=>lerp(v,[0x8A,0x3A,0x4A][i],flash));
+  const cold=[0x15,0x1B,0x33], k=io(prog(t,4.9,5.5));
+  $('base').style.background=`rgb(${warm.map((v,i)=>Math.round(lerp(v,cold[i],k))).join(',')})`;
+  $('dawn').style.opacity=b;
+  // stars
+  const so=1-prog(t,5.6,6.8);
+  stars.forEach(s=>{s.e.style.opacity=so*(.45+.45*Math.sin(t*s.sp*2.2+s.ph))*(t<5?1:.5)});
+  // headlines
+  const tc=mix('#FFF8EC','#2E2340',prog(b,.35,.65));
+  HEAD.forEach(([id,a0,b0])=>{const e=$(id);
+    const inn=a0<0?1:out(prog(t,a0,a0+.4)), o=1-prog(t,b0-.2,b0);
+    e.style.opacity=inn*o; e.style.transform=`translateY(${(1-inn)*40}px)`; e.style.color=tc;});
+  // mascot state
+  let cx=500,cy=1070,S=520,rot=0,sc=1,op=1,x=0,y=0,cl=0;
+  let w={sleepy:0,ringing:0,awake:0,happy:0};
+  if(t<2.5){w.sleepy=1;y=Math.sin(t*2*Math.PI/2)*14;sc=1+Math.sin(t*2*Math.PI/2)*.015;}
+  else if(t<7.2){
+    const f=prog(t,2.5,2.62);w.sleepy=1-f;w.ringing=f;
+    if(t<5.0){const p=prog(t,2.5,2.9);sc=1+.08*Math.sin(p*Math.PI);rot=Math.sin(t*2*Math.PI*5)*5*Math.min(1,p*2);x=Math.sin(t*2*Math.PI*5+1)*6;y=-Math.abs(Math.sin(t*2*Math.PI*2.5))*10;}
+    else{cy=1020;cl=io(prog(t,5.0,5.25));x=Math.sin(t*2*Math.PI*7)*5*cl;rot=Math.sin(t*2*Math.PI*6+2)*1.2*cl;
+      const un=prog(t,6.4,7.2); cl=cl*(1-io(un)); }
+    if(t>=7.0){const f2=prog(t,7.0,7.25);w.ringing=1-f2;w.awake=f2;}
+  } else if(t<12.5){
+    cy=1020;w.awake=1;
+    const p=prog(t,7.2,7.7);sc=1+.12*Math.sin(p*Math.PI);
+    y=-Math.abs(Math.sin(Math.max(0,t-7.7)*2*Math.PI*1.1))*18*prog(t,7.7,8.0);
+    rot=Math.sin(t*5)*2;
+    op=1-prog(t,9.1,9.5);
+  } else {
+    cx=500;cy=610;S=520;w.happy=1;const p=back(prog(t,12.5,13.1));sc=p;op=prog(t,12.5,12.6);
+    y=Math.sin(Math.max(0,t-13.1)*2*Math.PI/1.6)*8;
+  }
+  for(const k2 in w)$('m_'+k2).style.opacity=w[k2];
+  $('m_cold').style.opacity=w.ringing*cl;
+  const m=$('mas');m.style.opacity=op;
+  m.style.transform=`translate(${cx-S/2+x}px,${cy-S/2+y}px) rotate(${rot}deg) scale(${sc})`;
+  const filt=`hue-rotate(${165*cl}deg) saturate(${1-.3*cl}) brightness(${1-.12*cl})`;
+  
+  // glows
+  const gl=$('glow');gl.style.opacity=b*(t<9.5?1:1-prog(t,9.5,10));gl.style.transform=`translate(${500-500}px,${cy-500}px) scale(${.8+.25*b})`;
+  const ic=$('ice');ic.style.opacity=(t>=5&&t<7.4)?cl*.9:0;ic.style.transform=`translate(${500-380}px,${1020-380}px)`;
+  // rings
+  rings.forEach((e,i)=>{const on=t>=2.5&&t<5.2;const p=((t-2.5)/1.25+i/4)%1;const r=lerp(240,640,out(p));
+    const o=on?(1-p)*.6*prog(t,2.5,2.8)*(1-prog(t,4.7,5.1)):0;
+    e.style.opacity=o;e.style.width=e.style.height=2*r+'px';e.style.left=(500-r+Math.sin(t*2*Math.PI*5+1)*6)+'px';e.style.top=(1070-r)+'px'});
+  // zzz
+  zs.forEach((e,i)=>{const p=((t/2.4)+i/3)%1;e.style.opacity=t<2.5?Math.sin(p*Math.PI)*.9:0;
+    e.style.left=(680+p*70+Math.sin(p*6+i)*12)+'px';e.style.top=(900-p*170)+'px';e.style.fontSize=(46+p*40)+'px'});
+  // clock
+  const c=$('clock');const co=1-prog(t,4.6,5.0);c.style.opacity=co;
+  const sh=t>=2.5?Math.sin(t*2*Math.PI*5)*3:0;
+  c.style.transform=`rotate(${sh}deg)`;
+  c.style.color=mix('#FFF8EC','#FF8A6B',prog(t,2.5,3.0));
+  // pill
+  const pw=$('pillw');const pin=back(prog(t,5.0,5.5));const pout=1-prog(t,9.1,9.4);
+  pw.style.opacity=(t<5?0:Math.min(1,prog(t,5.0,5.2))*pout);
+  const sw=prog(t,6.6,6.8);
+  const pd=$('pdark'),pb=$('pbright');
+  pd.style.opacity=1-sw;pb.style.opacity=sw;
+  const popB=t>6.6?1+.15*Math.sin(prog(t,6.6,7.0)*Math.PI):1;
+  pd.style.transform=`translateX(-50%) scale(${t<6.6?pin:1})`;pd.style.left='50%';
+  pb.style.transform=`translateX(-50%) scale(${popB})`;pb.style.left='50%';
+  // bar
+  const bar=$('bar');const bf=io(prog(t,6.8,8.3));
+  bar.style.opacity=prog(t,6.5,6.9)*(1-prog(t,9.1,9.4));
+  bar.style.transform=`translateY(${(1-prog(t,6.5,6.9))*30}px) scale(${1+.06*Math.sin(prog(t,8.3,8.7)*Math.PI)})`;
+  $('fill').style.width=(bf*100)+'%';
+  // sparks
+  sparks.forEach((e,i)=>{const p=prog(t,8.3,9.3);const ang=i/10*6.283;const r=300+p*220;const s=lerp(26,8,p);
+    e.style.opacity=p>0&&p<1?(1-p):0;e.style.width=e.style.height=s+'px';
+    e.style.left=(500+Math.cos(ang)*r-s/2)+'px';e.style.top=(1020+Math.sin(ang)*r-s/2)+'px'});
+  // phone
+  const pp=out(prog(t,9.5,10.3));const po=io(prog(t,12.2,12.8));
+  const ph=$('phone');ph.style.opacity=t>=9.5&&t<12.9?1:0;
+  ph.style.transform=`translateY(${lerp(1950,600,pp)+po*1400}px) rotate(${(1-pp)*3}deg)`;
+  // end card
+  const e=prog(t,12.6,13.0);
+  $('wm').style.opacity=prog(t,13.0,13.4);$('wm').style.transform=`translateY(${(1-out(prog(t,13.0,13.5)))*30}px)`;
+  $('tag').style.opacity=prog(t,13.4,13.8);$('tag').style.transform=`translateY(${(1-out(prog(t,13.4,13.9)))*30}px)`;
+  $('app').style.opacity=prog(t,13.8,14.2);$('app').style.transform=`translateY(${(1-out(prog(t,13.8,14.3)))*30}px)`;
+  $('end').style.opacity=1;
+  $('wm').style.top=(t>=12.5?'880px':'880px');$('tag').style.top='1090px';$('app').style.top='1250px';
+}
+window.renderAt=renderAt;renderAt(0);
+</script></body></html>
