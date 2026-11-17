@@ -1,0 +1,12 @@
+# GitHub Pages serves this folder as Wupiko's public site. The landing page and
+# guides are written by scripts/build-site.py. Engineering notes stay out of it.
+title: Wupiko
+description: The no-snooze alarm clock.
+exclude:
+  - android.md
+  - ios.md
+  - release.md
+  - device-checklist.md
+  - validation.md
+  - brand.md
+  - store-listing.md
